@@ -1,8 +1,6 @@
 #Exercise 1: Classic Ricker, sampling error, reference points, and autocorrelation
 
-#Dependencies: please install these
-#install.packages('gsl')
-#remotes::install_git('https://github.com/Pacific-salmon-assess/samEst')
+
 library(samEst)
 library(gsl)
 
