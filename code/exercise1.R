@@ -1,5 +1,7 @@
 #Exercise 1: Classic Ricker, sampling error, reference points, and autocorrelation
 
+#Dependencies: please install these
+#install.packages('gsl')
 #remotes::install_git('https://github.com/Pacific-salmon-assess/samEst')
 library(samEst)
 
@@ -19,7 +21,7 @@ beta<- 1/(1000) #often easier to work in Smax (1/beta) as its far more interpret
 sigma<- 0.6 #ranges from ~0.2 to 1.5 for most Pacific salmon stocks
 
 #Simulation parameters:
-L=40 #length of time-series - here 40 years
+L=30 #length of time-series - here 30 years
 RS=numeric(L) #productivity in each year
 S=numeric(L);S[1]=600 #spawners in each year, we start with an initial escapement of 600 individuals
 R=numeric(L) #recruits in each year
@@ -107,5 +109,38 @@ summary(m)
 
 #Stochastic sampling errors do not necessarily create biases, just change precision...
 
+#E1.3 - Reference points####
 
-#E1.3 Reference points####
+#Ultimately these parameters from the Ricker curve are important for estimating stock reference points
+
+#Smax - Spawner abundance that maximizes surplus production (AKA production capacity)
+#Simply the inverse of the per capita density-dependence parameter (AKA capacity rate parameter)
+Smax = 1/beta
+
+#Smsy - Spawner abundance that maximizes sustainable yield
+Smsy = (1 − gsl::lambert_W0(exp(1 - alpha)))/beta
+
+#lambert function allows for an explicit solution for calculating Smsy (Scheuerell 2016 PeerJ)
+
+#Umsy - the corresponding harvest rate that would achieve Smsy
+Umsy = 1-gsl::lambert_W0(exp(1-alpha))
+
+#Check how estimated parameters relate to the real ones
+
+Smax_obs=1/-m$coefficients[2]
+
+Smax
+Smax_obs
+
+Smsy_obs=(1 − gsl::lambert_W0(exp(1-m$coefficients[1])))/-m$coefficients[2]
+
+Smsy
+Smsy_obs
+
+Umsy_obs=1-gsl::lambert_W0(exp(1-m$coefficients[1]))
+
+Umsy
+Umsy_obs
+
+
+#E1.4 - Autocorrelated residuals####
