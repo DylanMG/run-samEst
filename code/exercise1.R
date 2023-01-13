@@ -2,7 +2,7 @@
 
 #Dependencies: please install these
 #install.packages('gsl')
-#remotes::install_git('https://github.com/Pacific-salmon-assess/samEst')
+remotes::install_git('https://github.com/Pacific-salmon-assess/samEst')
 library(samEst)
 
 #Function: this function gives a stochastic draw from a Ricker function with defined parameters
@@ -49,6 +49,19 @@ m=lm(RS~S)
 summary(m)
 
 #More complex routes - samEst in TMB or Stan
+df=data.frame(S=S,R=R,logRS=RS)
+m_stan <- samEst::ricker_stan(data=df) #Stan estimate
+m_stan$stanfit #summary for the Stan fit
+
+
+m_tmb <- samEst::ricker_TMB(data=df, priors=1) #TMB estimate, priors = 1 means yes include priors for estimate
+m_tmb$alpha #productivity 
+m_tmb$beta #capacity rate
+m_tmb$sig #sigma
+
+#samEst has some plot functions to visualize the relationship
+samEst::sr_plot(df=df,mod=m_stan,type='static',form='stan')
+samEst::sr_plot(df=df,mod=m_tmb,type='static',form='tmb')
 
 
 #E1.2 - Sampling Error####
