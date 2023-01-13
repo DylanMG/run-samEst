@@ -3,6 +3,10 @@
 #January 2023
 #----------------------------------------------------------------
 
+#dependencies
+install.packages('gsl')
+
+
 
 #install TMB
 install.packages("TMB")

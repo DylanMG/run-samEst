@@ -10,6 +10,8 @@ R > 4.0 on Windows also requires Rtools 4.X. Find out which Rtools version you n
 
 samEst depends on the R packages TMB and the latest version of stan. So we need to ensure that these packages are installed and working. To install and test the dependencies before installing samEst run [code/install_samEst.R](https://github.com/TESA-workshops/run-samEst/blob/main/code/install_samest.R)
 
+If you run into problems, please submit an issue in this repository. 
+
 ## Data 
 You can run the workshop on your own data or examples can be provided. Let Dan Greenberg (dan.greenberg@dfo-mpo.gc.ca) and Catarina Wor (catarina.wor@dfo-mpo.gc.ca) know in advance if you would like to be assigned an example data set.
 
@@ -21,3 +23,4 @@ You can run the workshop on your own data or examples can be provided. Let Dan G
  - Run TMB models (stan would take too long??)
  - run model selection criteria 
  - plot results
+ - discussion questions
