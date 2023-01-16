@@ -49,6 +49,4 @@ fit1 <- stan(
   )
 
 #install samEst
-remove.packages(c("StanHeaders", "rstan"))
-install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
-install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+remotes::install_git('https://github.com/Pacific-salmon-assess/samEst')

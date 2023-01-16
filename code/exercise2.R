@@ -20,14 +20,27 @@ sr<-subset(stock_dat,stock=="Cowichan"&species=="Chinook")
 #or pick a stock at random
 sr<-subset(stock_dat,stock.id==round(runif(1,1,242)))
 
-#modify
+#modify data structure for use with samEst models
 srdat<-data.frame(by=sr$broodyear,
   S=sr$spawners,
   R=sr$recruits,
   logRS=log(sr$recruits/sr$spawners))
 
 
+
+#prepare before start fitting model
+#for predictions
 Spred<-seq(0,max(srdat$S)*2,length.out=nrow(srdat))
+#pre compile stan code, these will take a long time
+simple_mod <- samEst::compile_code(type='static', ac=FALSE, par='n',lambertW = FALSE)
+simpleac_mod <- samEst::compile_code(type='static', ac=TRUE, par='n',lambertW = FALSE)
+rwa_mod <- samEst::compile_code(type='rw',ac=FALSE,par="a",lambertW = FALSE)
+rwb_mod <- samEst::compile_code(type='rw',ac=FALSE,par="b",lambertW = FALSE)
+rwab_mod <- samEst::compile_code(type='rw',ac=FALSE,par="both",lambertW = FALSE)
+hmma_mod <- samEst::compile_code(type='hmm',ac=FALSE,par="a",lambertW = FALSE)
+hmmb_mod <- samEst::compile_code(type='hmm',ac=FALSE,par="b",lambertW = FALSE)
+hmmab_mod <- samEst::compile_code(type='hmm',ac=FALSE,par="both",lambertW = FALSE)
+
 
 
 #Simple model
@@ -35,7 +48,7 @@ p <- ricker_TMB(data=srdat)
 
 Rpred_p<-Spred*p$alpha*exp(-p$beta*Spred)
 
-bac <- ricker_stan(data=srdat,iter = 2000)
+b <- ricker_stan(data=srdat,iter = 2000, mod=simple_mod)
 Rpred_b<-Spred*exp(b$alpha-b$beta*Spred)
 
 
@@ -45,13 +58,13 @@ pac<-ricker_TMB(data=srdat, AC=TRUE)
 Rpred_pac<-Spred*exp(pac$alpha-pac$beta*Spred)
 plot(Spred,Rpred_pac)
 #stan
-bac <- ricker_stan(data=srdat,iter = 2000,AC=TRUE)
+bac <- ricker_stan(data=srdat, iter = 2000, AC=TRUE, mod=simpleac_mod )
 Rpred_bac<-Spred*exp(bac$alpha-bac$beta*Spred)
 plot(Spred,Rpred_bac)
 
 #=====================================================================
 # rw in alpha
-ptva<- ricker_rw_TMB(data=srdat,tv.par="a")
+ptva<- ricker_rw_TMB(data=srdat, tv.par="a", mod=rwa_mod )
 Rpred_ptva<- matrix(0, nrow=length(Spred),ncol=length(ptva$alpha))
 for(i in seq_along(ptva$alpha)){
   Rpred_ptva[,i]<-Spred*exp(ptva$alpha[i]-ptva$beta*Spred)
@@ -76,7 +89,7 @@ for(i in seq_along(ptvb$beta)){
 
 matplot(Spred,Rpred_ptvb)
 
-btvb <- ricker_rw_stan(data=srdat, par="b",iter = 800)
+btvb <- ricker_rw_stan(data=srdat, par="b",iter = 800, mod=rwb_mod)
 Rpred_btvb<- matrix(0, nrow=length(Spred),ncol=length(btvb$beta))
 for(i in seq_along(btvb$beta)){
   Rpred_btvb[,i]<-Spred*exp(btvb$alpha-btvb$beta[i]*Spred)
@@ -92,7 +105,7 @@ for(i in seq_along(ptvab$beta)){
 }
 matplot(Spred,Rpred_ptvab)
 
-btvab <- ricker_rw_stan(data=srdat, par="both",iter = 800) 
+btvab <- ricker_rw_stan(data=srdat, par="both",iter = 800, mod=rwab_mod) 
 Rpred_btvab<- matrix(0, nrow=length(Spred),ncol=length(btvab$beta))
 for(i in seq_along(btvab$beta)){
   Rpred_btvab[,i]<-Spred*exp(btvab$alpha[i]-btvab$beta[i]*Spred)
@@ -107,7 +120,7 @@ for(i in seq_along(phmma$alpha)){
 }
 
 matplot(Spred,Rpred_phmma)
-bhmma <- ricker_hmm_stan(data=srdat, par="a",iter = 800)
+bhmma <- ricker_hmm_stan(data=srdat, par="a",iter = 800, mod=hmma_mod)
 
 Rpred_bhmma<- matrix(0, nrow=length(Spred),ncol=length(bhmma$alpha))
 for(i in seq_along(bhmma$alpha)){
@@ -122,15 +135,15 @@ for(i in seq_along(phmmb$beta)){
   Rpred_phmmb[,i]<-Spred*exp(phmmb$alpha-phmmb$beta[i]*Spred)
 }
 matplot(Spred,Rpred_phmmb)
-bhmmb <- ricker_hmm_stan(data=srdat, par="b",iter = 800)
+bhmmb <- ricker_hmm_stan(data=srdat, par="b",iter = 800,  )
 Rpred_bhmmb<- matrix(0, nrow=length(Spred),ncol=length(bhmmb$beta))
-for(i in seq_along(bhmmb$beta)){
+for(i in seq_along(bhmmb$beta)){mod=hmmb_mod
   Rpred_bhmmb[,i]<-Spred*exp(bhmmb$alpha-bhmmb$beta[i]*Spred)
 }
 matplot(Spred,Rpred_bhmmb)
 #=====================================================================
 #regime shift in alpha and beta
-phmmab <- ricker_hmm_TMB(data=srdat, tv.par='both')
+phmmab <- ricker_hmm_TMB(data=srdat, tv.par='both',mod=hmmab_mod)
 Rpred_phmmab<- matrix(0, nrow=length(Spred),ncol=length(phmmab$alpha))
 for(i in seq_along(phmmab$alpha)){
   Rpred_phmmab[,i]<-Spred*exp(phmmab$alpha[i]-phmmab$beta[i]*Spred)
