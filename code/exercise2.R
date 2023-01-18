@@ -14,7 +14,11 @@ unique(paste(stock_dat$stock, stock_dat$species))
 #choose a stock of your preference from the list   
 unique(paste(stock_dat$stock, stock_dat$species))
 
-#eg
+#eg.
+
+#Cowichan chinook
+sr<-subset(stock_dat,stock=="Cowichan"&species=="Chinook")
+#Nicola chinook
 sr<-subset(stock_dat,stock=="Cowichan"&species=="Chinook")
 
 #or pick a stock at random
@@ -25,7 +29,6 @@ srdat<-data.frame(by=sr$broodyear,
   S=sr$spawners,
   R=sr$recruits,
   logRS=log(sr$recruits/sr$spawners))
-
 
 
 #prepare before start fitting model
@@ -56,7 +59,7 @@ Rpred_b<-Spred*exp(b$alpha-b$beta*Spred)
 #TMB -MLE
 pac<-ricker_TMB(data=srdat, AC=TRUE)
 Rpred_pac<-Spred*exp(pac$alpha-pac$beta*Spred)
-plot(Spred,Rpred_pac)
+plot(Spred,Rpred_pac,type='l')
 #stan
 bac <- ricker_stan(data=srdat, iter = 2000, AC=TRUE, mod=simpleac_mod )
 Rpred_bac<-Spred*exp(bac$alpha-bac$beta*Spred)
@@ -64,7 +67,7 @@ plot(Spred,Rpred_bac)
 
 #=====================================================================
 # rw in alpha
-ptva<- ricker_rw_TMB(data=srdat, tv.par="a", mod=rwa_mod )
+ptva<- ricker_rw_TMB(data=srdat, tv.par="a")
 Rpred_ptva<- matrix(0, nrow=length(Spred),ncol=length(ptva$alpha))
 for(i in seq_along(ptva$alpha)){
   Rpred_ptva[,i]<-Spred*exp(ptva$alpha[i]-ptva$beta*Spred)

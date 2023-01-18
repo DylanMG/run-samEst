@@ -1,0 +1,136 @@
+---
+title: "Exercise 2: Random Walk Ricker"
+format:
+  html:
+    theme: default
+    number-sections: true
+---
+
+```{r}
+library(samEst);library(ggplot2)
+
+#Function: this function gives a stochastic draw from a Ricker function with defined parameters
+ricker_RS=function(alpha,beta,S,sigma){
+  RS=rnorm(1,alpha - beta*S,sigma) #this draws the realized productivity (log RS) with the specified level of error
+  return(RS)
+}
+```
+
+In this exercise we'll expand upon the previous simulation to examine what happens when the parameters of the Ricker curve are non-stationary in time - through several scenarios.
+
+#E1.1: Classic Ricker
+
+We'll begin by simulating a spawner-recruit time-series from the Ricker function and to see how the parameters dictate this relationship, first start with these parameters.
+
+Starting with changes in productivity (alpha):
+```{r}
+#Simulation parameters:
+N=30 #length of time-series
+L=N+4 #length of time-series +4 for starting cohorts
+RS=numeric(L) #productivity in each year
+S=numeric(L);S[1:4]=runif(4,Seq*0.8,Seq*1.2) #spawners in each year, we start with an initial escapement of 600 individuals
+R=numeric(L) #recruits in each year
+U=runif(L,0.4,0.6) #Harvest rate of cohorts with low variance 
+#(note U should be within the range of 0 to 1)
+
+#Key parameters: alpha, beta, and sigma
+alpha<- seq(2.3,0.6,length.out=L) # productivity decline over 30 years
+beta<- 1/(1000) # capacity rate -often easier to conceptualize as Smax (1/beta) as its far more interpretable
+sigma<- 0.3 # ranges from ~0.2 to 1.5 for most Pacific salmon stocks
+Seq<-alpha/beta # equilibrium spawners - just used for the simulation start points
+
+
+for(t in 5:L){
+  RS[t]=ricker_RS(alpha[t],beta,sigma,S=S[t-4]) #draw productivity in each year
+  R[t]=exp(RS[t])*S[t-4] #transform into recruits by converting logRS to RS (recruits per spawner) times spawners
+  S[t]=R[t]*U[t] #escapement left after harvest
+}
+
+#Pare down the time-series and align the spawners and recruit estimates (which are currently staggered 4 years)
+S=S[-((L-3):L)] #Chop off the final spawner estimate to retain just the length L
+R<-R[5:L]
+RS<-RS[5:L]
+df=data.frame(S=S,R=R,logRS=RS,by=seq(1:30)) #Make a dataframe with the required information for samEst
+
+#We'll fit a stationary curve
+m=lm(RS~S)
+S_pred=seq(min(S),max(S),length.out=200)
+pred_R=exp(m$coefficient[1]+m$coefficient[2]*S_pred)*S_pred
+
+par(mfrow=c(1,2))
+plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+lines(pred_R~S_pred)
+
+plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+abline(m)
+
+```
+
+Let's see if we can explicitly recover this trend using a Ricker model with time-varying (random walk) in productivity:
+
+```{r}
+m_a_rw<- samEst::compile_code(type='rw', ac=FALSE, par='a')
+
+m_stan <- samEst::ricker_rw_stan(data=df,mod=m_a_rw,par='a') #Stan estimate
+m_stan$mcmcsummary[grepl('log_a',rownames(m_stan$mcmcsummary)),] #extract the productivity series
+
+samEst::sr_plot(df=df,mod=m_stan$stanfit,type='rw',par='a',form='stan',title='stan estimate')
+```
+
+Was it able to capture the underlying trend? Try changing the parameters (time-series length, trend - upwards/magnitude, sigma, etc.).
+
+Let's try with changing capacity next:
+```{r}
+#Simulation parameters:
+N=30 #length of time-series
+L=N+4 #length of time-series +4 for starting cohorts
+RS=numeric(L) #productivity in each year
+S=numeric(L);S[1:4]=runif(4,Seq*0.8,Seq*1.2) #spawners in each year, we start with an initial escapement of 600 individuals
+R=numeric(L) #recruits in each year
+U=runif(L,0.4,0.6) #Harvest rate of cohorts with low variance 
+#(note U should be within the range of 0 to 1)
+
+#Key parameters: alpha, beta, and sigma
+alpha<- 1.5 # productivity decline over 30 years
+Smax<- seq(2000,300,length.out=L) #Express as Smax first, just easier to conceptualize
+beta<- 1/Smax # capacity rate -often easier to conceptualize as Smax (1/beta) as its far more interpretable
+sigma<- 0.3 # ranges from ~0.2 to 1.5 for most Pacific salmon stocks
+Seq<-alpha/beta # equilibrium spawners - just used for the simulation start points
+
+
+for(t in 5:L){
+  RS[t]=ricker_RS(alpha,beta[t],sigma,S=S[t-4]) #draw productivity in each year
+  R[t]=exp(RS[t])*S[t-4] #transform into recruits by converting logRS to RS (recruits per spawner) times spawners
+  S[t]=R[t]*U[t] #escapement left after harvest
+}
+
+#Pare down the time-series and align the spawners and recruit estimates (which are currently staggered 4 years)
+S=S[-((L-3):L)] #Chop off the final spawner estimate to retain just the length L
+R<-R[5:L]
+RS<-RS[5:L]
+df=data.frame(S=S,R=R,logRS=RS,by=seq(1:30)) #Make a dataframe with the required information for samEst
+
+#We'll fit a stationary curve
+m=lm(RS~S)
+S_pred=seq(min(S),max(S),length.out=200)
+pred_R=exp(m$coefficient[1]+m$coefficient[2]*S_pred)*S_pred
+
+par(mfrow=c(1,2))
+plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+lines(pred_R~S_pred)
+
+plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+abline(m)
+
+```
+
+Let's see if we can explicitly recover this trend now using a Ricker model with time-varying (random walk) in capacity:
+
+```{r}
+m_b_rw<- samEst::compile_code(type='rw', ac=FALSE, par='b')
+
+m_stan <- samEst::ricker_rw_stan(data=df,mod=m_b_rw,par='b') #Stan estimate
+m_stan$mcmcsummary[grepl('Smax',rownames(m_stan$mcmcsummary)),] #extract the productivity series
+
+samEst::sr_plot(df=df,mod=m_stan$stanfit,type='rw',par='b',form='stan',title='stan estimate')
+```

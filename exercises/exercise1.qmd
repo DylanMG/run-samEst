@@ -1,0 +1,276 @@
+---
+title: "Exercise 1: Classic Ricker"
+format:
+  html:
+    theme: default
+    number-sections: true
+editor_options: 
+  chunk_output_type: inline
+---
+# Beginning
+
+Make sure you've installed samEst by visiting 'install_samest.R'
+
+```{r}
+library(samEst);library(ggplot2)
+
+#Function: this function gives a stochastic draw from a Ricker function with defined parameters
+ricker_RS=function(alpha,beta,S,sigma){
+  RS=rnorm(1,alpha - beta*S,sigma) #this draws the realized productivity (log RS) with the specified level of error
+  return(RS)
+}
+```
+
+#E1.1: Classic Ricker
+
+We'll begin by simulating a spawner-recruit time-series from the Ricker function and to see how the parameters dictate this relationship, first start with these parameters:
+
+```{r}
+#Key parameters: alpha, beta, and sigma
+alpha<- 1.5 # productivity - usually ranges from ~ 0.5 - 3
+beta<- 1/(1000) # capacity rate -often easier to conceptualize as Smax (1/beta) as its far more interpretable
+sigma<- 0.6 # ranges from ~0.2 to 1.5 for most Pacific salmon stocks
+Seq<-alpha/beta # equilibrium spawners - just used for the simulation start points
+
+#Simulation parameters:
+N=30 #length of time-series
+L=N+4 #length of time-series +4 for starting cohorts
+RS=numeric(L) #productivity in each year
+S=numeric(L);S[1:4]=runif(4,Seq*0.8,Seq*1.2) #spawners in each year, we start with an initial escapement of 600 individuals
+R=numeric(L) #recruits in each year
+U=runif(L,0.4,0.6) #Harvest rate of cohorts with low variance 
+#(note U should be within the range of 0 to 1)
+```
+
+What we are creating is a very simplified model to generate stock recruitment data. It has a fixed 4-yr return cycle and the spawners are what remains after applying the harvest rate to that cohort
+
+```{r,fig.width=6,fig.height=3}
+for(t in 5:L){
+  RS[t]=ricker_RS(alpha,beta,sigma,S=S[t-4]) #draw productivity in each year
+  R[t]=exp(RS[t])*S[t-4] #transform into recruits by converting logRS to RS (recruits per spawner) times spawners
+  S[t]=R[t]*U[t] #escapement left after harvest
+}
+
+#Pare down the time-series and align the spawners and recruit estimates (which are currently staggered 4 years)
+S=S[-((L-3):L)] #Chop off the final spawner estimate to retain just the length L
+R<-R[5:L]
+RS<-RS[5:L]
+
+par(mfrow=c(1,2))
+plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+
+```
+
+Okay, we have our dataset - let's try fitting a model to recover the Ricker parameters
+
+Simplest route: good old linear regression of log(productivity)
+
+```{r,fig.width=6,fig.height=3}
+m=lm(RS~S)
+S_pred=seq(min(S),max(S),length.out=200)
+pred_R=exp(m$coefficient[1]+m$coefficient[2]*S_pred)*S_pred
+
+par(mfrow=c(1,2))
+plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+lines(pred_R~S_pred)
+
+plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+abline(m)
+
+```
+
+How close are the paramaeters to their simulated value?
+```{r}
+unname((m$coefficients[1])/alpha) #productivity
+unname(abs(m$coefficients[2])/beta) #capacity rate
+summary(m)$sigma/sigma #standard error (sigma)
+
+#As a fraction of the true value - eg. 1.17 = 17% higher, 0.91 = 9% lower
+```
+
+Now, fit in samEst - options for Stan:
+
+```{r}
+df=data.frame(S=S,R=R,logRS=RS,by=seq(1:30)) #Make a dataframe with the required information for samEst
+#That is Recruits (R), Spawners (S), productivity (logRS), and brood years (a vector of years = 1998, 1999,..., etc)
+
+#First we need to declare the model, here the 'static' Ricker (ac=FALSE indicates no autocorrelation, see further below):
+m1<- samEst::compile_code(type='static', ac=FALSE, par='n',lambertW = FALSE)
+
+#Then that model to our data:
+m_stan <- samEst::ricker_stan(data=df,mod=m1) #Stan estimate
+m_stan$mcmcsummary[1:4,] #summary for the Stan fit for our parameters of interest - look at Rhat as a quick diagnostic of the fit (should be <1.1)
+
+```
+
+And in TMB:
+
+```{r}
+m_tmb <- samEst::ricker_TMB(data=df, priors=1) #TMB estimate, priors = 1 means yes include priors for estimate (recommended)
+
+#We can draw out the MLE approximation estimates:
+m_tmb$alpha #productivity 
+m_tmb$beta #capacity rate
+m_tmb$sig #sigma
+
+#How close are the estimated parameters? expressed as a proportion
+m_tmb$alpha/alpha #productivity 
+m_tmb$beta/beta #capacity rate
+m_tmb$sig/sigma #sigma
+```
+
+Let's quickly visualize the fit - using some standardized S-R plots from the sr_plot function in samEst:
+
+```{r}
+samEst::sr_plot(df=df,mod=m_stan$stanfit,type='static',form='stan',title='stan estimate')
+samEst::sr_plot(df=df,mod=m_tmb,type='static',form='tmb',title='tmb estimate')
+```
+
+
+Now, return to the beginning of Exercise 1.1 and try changing the parameters (ie. alpha, beta, sigma) or the conditions of the S-R time-series such as length of series, harvest rate. Re-run these sections to visualize changes in the curves and data and how this affects the precision of the parameter estimates.
+
+
+#E1.2: Sampling error
+
+The previous simulation is a bit overly optimistic. It assumes that we know with full accuracy the true spawners and recruits generated under that model in a given year. Of course, the reality is that our estimates often have high levels of sampling error - we're going to incorporate that and see how it affects our inferences.
+
+```{r}
+#Let's start by assigning the level of sampling/measurement error
+CV=0.1
+#Adjust the CV to different levels (in reality we would... hope.. it usually falls in the 0.1 to 0.3 realm)
+
+#Let's add in sampling error to just our estimate of spawners returning to natal streams
+S_obs=rnorm(length(S),S,CV*S)
+
+#Similarly this will change our estimates of productivity from the sampled data:
+RS_obs=log(R/S_obs)
+
+#Plot out S-R fits
+m=lm(RS_obs~S_obs)
+
+par(mfrow=c(1,2))
+plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+lines(pred_R~S_pred)
+
+plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+abline(m)
+
+unname((m$coefficients[1])/alpha) #productivity
+unname(abs(m$coefficients[2])/beta) #capacity rate
+summary(m)$sigma/sigma #standard error (sigma)
+
+```
+
+Adjust the coefficient of variation (CV) to see how this influences estimates for the known parameters.
+
+In reality there is also error in our estimates of the adult recruits from a cohort (e.g. missing components of catch).
+
+```{r}
+#Let's start by assigning the level of sampling/measurement error
+CV=0.1
+#Adjust the CV to different levels (in reality we would... hope.. it usually falls in the 0.1 to 0.3 realm)
+
+#Error in our estimate of recruits 
+R_obs=rnorm(length(R),R,CV*R)
+#And what our estimates of productivity would then be from sampled data:
+RS_obs=log(R_obs/S_obs)
+
+#Plot out S-R fits
+m=lm(RS_obs~S_obs)
+
+par(mfrow=c(1,2))
+plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+lines(pred_R~S_pred)
+
+plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+abline(m)
+
+unname((m$coefficients[1])/alpha) #productivity
+unname(abs(m$coefficients[2])/beta) #capacity rate
+summary(m)$sigma/sigma #standard error (sigma)
+
+```
+
+What if the sampling error changes over time - eg. change in methodology
+
+```{r}
+CV1=0.4 #coefficient of variation - period 1
+CV2=0.1 #coefficient of variation - period 2
+P1=round(N*0.3) #duration of sampling period 1
+
+#generate observations for each period:
+S_obs[1:P1]=rnorm(P1,S[1:P1],CV1*S[1:P1]) #Estimates in the first sampling period
+S_obs[c(P1+1):N]=rnorm(N-P1,S[c(P1+1):N],CV2*S[c(P1+1):N]) #Estimates in the second sampling perido
+R_obs[1:P1]=rnorm(P1,R[1:P1],CV1*R[1:P1]) #Estimates in the first sampling period
+R_obs[c(P1+1):N]=rnorm(N-P1,R[c(P1+1):N],CV2*R[c(P1+1):N]) #Estimates in the second sampling perido
+
+RS_obs=log(R_obs/S_obs)
+
+#Plot out S-R fits
+m=lm(RS_obs~S_obs)
+
+par(mfrow=c(1,2))
+plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+lines(pred_R~S_pred)
+
+plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+abline(m)
+
+unname((m$coefficients[1])/alpha) #productivity
+unname(abs(m$coefficients[2])/beta) #capacity rate
+summary(m)$sigma/sigma #standard error (sigma)
+
+```
+
+Try varying the coefficient of variation.
+
+What can you conclude about how sampling error influnces parameter estimates?
+
+#E1.3: Reference points
+
+Ultimately these parameters from the Ricker curve are important for estimating stock reference points (more on this later this week... but here is the quick description)
+
+Smax - Spawner abundance that maximizes surplus production (AKA production capacity)
+
+Simply the inverse of the per capita density-dependence parameter (AKA capacity rate parameter)
+```{r}
+Smax = 1/beta
+Smax
+```
+
+Smsy - Spawner abundance that maximizes sustainable yield. Note the lambert function allows for an explicit solution for calculating Smsy (Scheuerell 2016 PeerJ)
+
+```{r}
+Smsy = (1 − gsl::lambert_W0(exp(1 - alpha)))/beta
+Smsy
+```
+
+Umsy - the corresponding harvest rate that would achieve Smsy
+```{r}
+Umsy = 1-gsl::lambert_W0(exp(1-alpha))
+Umsy
+```
+
+Check how estimated parameters relate to the real ones
+```{r}
+Smax_obs=1/-m$coefficients[2]
+Smax_obs
+Smax
+Smax_obs/Smax
+```
+
+```{r}
+Smsy_obs=(1 − gsl::lambert_W0(exp(1-m$coefficients[1])))/-m$coefficients[2]
+Smsy
+Smsy_obs
+Smsy_obs/Smsy
+```
+
+```{r}
+Umsy_obs=1-gsl::lambert_W0(exp(1-m$coefficients[1]))
+
+Umsy
+Umsy_obs
+Umsy_obs/Umsy
+```
