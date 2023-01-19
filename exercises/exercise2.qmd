@@ -18,7 +18,7 @@ ricker_RS=function(alpha,beta,S,sigma){
 
 In this exercise we'll expand upon the previous simulation to examine what happens when the parameters of the Ricker curve are non-stationary in time - through several scenarios.
 
-#E1.1: Classic Ricker
+#E2: Non-stationary (aka time-varying, aka random walk) Ricker models
 
 We'll begin by simulating a spawner-recruit time-series from the Ricker function and to see how the parameters dictate this relationship, first start with these parameters.
 
@@ -54,30 +54,58 @@ df=data.frame(S=S,R=R,logRS=RS,by=seq(1:30)) #Make a dataframe with the required
 
 #We'll fit a stationary curve
 m=lm(RS~S)
-S_pred=seq(min(S),max(S),length.out=200)
-pred_R=exp(m$coefficient[1]+m$coefficient[2]*S_pred)*S_pred
+df_pred=data.frame(
+S_pred=seq(min(S),max(S),length.out=200),
+R_pred=exp(m$coefficient[1]+m$coefficient[2]*S_pred)*S_pred
+)
 
-par(mfrow=c(1,2))
-plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
-lines(pred_R~S_pred)
-
-plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
-abline(m)
-
+ ggplot2::ggplot(df, aes(S, R)) +
+ geom_line(data=df_pred,aes(x=S_pred,y=R_pred),linewidth=1.3)+
+      geom_point(aes(colour = by),size=2.5) +
+      scale_colour_viridis_c(name='Year')+
+      xlab("Spawners") + 
+      ylab("Recruits")+
+      xlim(0, max(df$S))+
+      ylim(0, max(df$R))
 ```
 
 Let's see if we can explicitly recover this trend using a Ricker model with time-varying (random walk) in productivity:
 
 ```{r}
-m_a_rw<- samEst::compile_code(type='rw', ac=FALSE, par='a')
+m_rwa_tmb<- samEst::ricker_rw_TMB(data=df,tv.par='a')
+#m_rwa_tmb stores a lot of information - eg. maximum likelihood estimates for the different parameters, model code, etc.
 
-m_stan <- samEst::ricker_rw_stan(data=df,mod=m_a_rw,par='a') #Stan estimate
-m_stan$mcmcsummary[grepl('log_a',rownames(m_stan$mcmcsummary)),] #extract the productivity series
 
-samEst::sr_plot(df=df,mod=m_stan$stanfit,type='rw',par='a',form='stan',title='stan estimate')
+#Examining the point estimates for max. productivity:
+m_rwa_tmb$alpha
+
+#Plot the fit to the data
+samEst::sr_plot(df=df,mod=m_rwa_tmb,type='rw',par='a',form='tmb',title='simulation')
+
+```
+
+How does it compare to the true underlying values?
+
+```{r}
+pred_sim=data.frame(pred=m_rwa_tmb$alpha,sim=alpha[5:L])
+
+
+ggplot2::ggplot(pred_sim, aes(pred, sim)) +
+      geom_point(aes(colour = as.numeric(rownames(pred_sim))),size=2.5) +
+      scale_colour_viridis_c(name='Year')+geom_abline(intercept=0,slope=1)
 ```
 
 Was it able to capture the underlying trend? Try changing the parameters (time-series length, trend - upwards/magnitude, sigma, etc.).
+
+You can also make the dynamics of alpha more complex or more random - feel free to use these in the simulation code above instead:
+```{r}
+#alpha=rnorm(L,1.5,0.5) White noise in productivity
+
+#Or a random walk: which is how it is also modelled
+#alpha=1.5
+#sig_a=0.5
+#for(t in 2:L){alpha[t]=alpha[t-1]+rnorm(1,0,1)*sig_a}
+```
 
 Let's try with changing capacity next:
 ```{r}
@@ -109,28 +137,63 @@ S=S[-((L-3):L)] #Chop off the final spawner estimate to retain just the length L
 R<-R[5:L]
 RS<-RS[5:L]
 df=data.frame(S=S,R=R,logRS=RS,by=seq(1:30)) #Make a dataframe with the required information for samEst
-
-#We'll fit a stationary curve
-m=lm(RS~S)
-S_pred=seq(min(S),max(S),length.out=200)
-pred_R=exp(m$coefficient[1]+m$coefficient[2]*S_pred)*S_pred
-
-par(mfrow=c(1,2))
-plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
-lines(pred_R~S_pred)
-
-plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
-abline(m)
-
 ```
 
 Let's see if we can explicitly recover this trend now using a Ricker model with time-varying (random walk) in capacity:
 
 ```{r}
-m_b_rw<- samEst::compile_code(type='rw', ac=FALSE, par='b')
+m_rwb_tmb<- samEst::ricker_rw_TMB(data=df,tv.par='b')
 
-m_stan <- samEst::ricker_rw_stan(data=df,mod=m_b_rw,par='b') #Stan estimate
-m_stan$mcmcsummary[grepl('Smax',rownames(m_stan$mcmcsummary)),] #extract the productivity series
+#The series for Smax
+m_rwb_tmb$Smax
 
-samEst::sr_plot(df=df,mod=m_stan$stanfit,type='rw',par='b',form='stan',title='stan estimate')
+samEst::sr_plot(df=df,mod=m_rwb_tmb,type='rw',par='b',form='tmb',title='simulation')
+```
+
+```{r}
+pred_sim=data.frame(pred=m_rwb_tmb$Smax,sim=Smax[5:L])
+
+ggplot2::ggplot(pred_sim, aes(pred, sim)) +
+      geom_point(aes(colour = as.numeric(rownames(pred_sim))),size=2.5) +
+      scale_colour_viridis_c(name='Year')+geom_abline(intercept=0,slope=1)
+```
+
+
+Of course, in reality we cannot know a priori which parameter is changing just by examining the spawner-recruitment plot (although we may have some system/ecological knowledge pointing towards either a change in productivity or capacity).
+
+We can compare model fits with either formulation to the above scenario where capacity is changing. You can pull out two information criteria that balance the model likelihood with parsimony (by penalizing more complex models) - AIC (Akaike Informtaion Criterion, adjusted for small sample sizes) or BIC (Bayesian Information Criterion), the latter tends to be more conservative in terms of penalizing complexity.
+
+```{r}
+#We will fit the random walk alpha model to the dataset generated with a capacity change
+m_rwa_tmb<- samEst::ricker_rw_TMB(data=df,tv.par='a')
+
+m_rwa_tmb$AICc
+m_rwb_tmb$AICc
+#The lower AICc == higher model likelihood
+
+m_rwa_tmb$BIC
+m_rwb_tmb$BIC
+#The lower BIC == higher model likelihood
+```
+
+
+We can even estimate with both parameters - but it can have convergence issues so beware...
+
+```{r}
+m_rwab_tmb<- samEst::ricker_rw_TMB(data=df,tv.par='both')
+m_rwab_tmb$alpha
+m_rwab_tmb$Smax
+
+m_rwa_tmb$AICc
+m_rwb_tmb$AICc
+m_rwab_tmb$AICc
+```
+
+You can also extract all of the reference points estimated for any of these models, In some cases they will be static and in others time-varying.
+```{r}
+m_rwa_tmb$Smsy
+
+m_rwb_tmb$Smsy
+
+m_rwa_tmb$umsy
 ```

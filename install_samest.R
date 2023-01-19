@@ -5,7 +5,7 @@
 
 #dependencies
 install.packages('gsl')
-
+install.packages('here')
 
 
 #install TMB
@@ -14,7 +14,7 @@ library(TMB)
 
 #test TMB
 compile("code/TMB/Ricker_simple.cpp")
-dyn.load(dynlib(here("code/TMB/Ricker_simple")))
+dyn.load(dynlib(here::here("code/TMB/Ricker_simple")))
 
 #run the TMB code
 s<-read.csv("data/example.csv")

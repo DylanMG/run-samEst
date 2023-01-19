@@ -1,0 +1,109 @@
+---
+title: "Exercise 3: Regime Shifts"
+format:
+  html:
+    theme: default
+---
+
+Changes in stock productivity or capacity may also under go abrupt changes (eg. the cut-off of spawning habitat; climate regimes shifts towards unfavourable conditions). Hidden Markov models explicitly models situations like this in terms of have distinct distributions of parameters and estimating the probability of observations originating from either distribution (akin to a mixture model).
+
+We start by assigning a scenario with abrupt change:
+
+```{r}
+#Simulation parameters:
+N=30 #length of time-series
+L=N+4 #length of time-series +4 for starting cohorts
+RS=numeric(L) #productivity in each year
+S=numeric(L);S[1:4]=runif(4,Seq*0.8,Seq*1.2) #spawners in each year, we start with an initial escapement of 600 individuals
+R=numeric(L) #recruits in each year
+U=runif(L,0.4,0.6) #Harvest rate of cohorts with low variance 
+#(note U should be within the range of 0 to 1)
+
+#Productivity regimes
+alpha_reg<- c(0.9,2) #two regimes: very low productivity and high productivity
+alpha<- numeric(L) #we'll set the durations for each regime through the time-series now
+alpha[1:round(L*0.33)]=alpha_reg[2] #high productivity for first 1/3rd
+alpha[c(round(L*0.33)+1):round(L*0.66)]=alpha_reg[1] #low productivity for middle 1/3rd
+alpha[c(round(L*0.66)+1):L]=alpha_reg[2] #and a return to high productivity
+plot(alpha,type='l')
+
+for(t in 5:L){
+  RS[t]=ricker_RS(alpha[t],beta,sigma,S=S[t-4]) #draw productivity in each year
+  R[t]=exp(RS[t])*S[t-4] #transform into recruits by converting logRS to RS (recruits per spawner) times spawners
+  S[t]=R[t]*U[t] #escapement left after harvest
+}
+
+#Pare down the time-series and align the spawners and recruit estimates (which are currently staggered 4 years)
+S=S[-((L-3):L)] #Chop off the final spawner estimate to retain just the length L
+R<-R[5:L]
+RS<-RS[5:L]
+df=data.frame(S=S,R=R,logRS=RS,by=seq(1:30)) #Make a dataframe with the required information for samEst
+ 
+ggplot2::ggplot(df, aes(S, R)) +
+      geom_point(aes(colour = by),size=2.5) +
+      scale_colour_viridis_c(name='Year')+
+      xlab("Spawners") + 
+      ylab("Recruits")+
+      xlim(0, max(df$S))+
+      ylim(0, max(df$R))
+```
+
+We can try to estimate this with the HMM in samEst:
+```{r}
+m_hmma=ricker_hmm_TMB(data=df, tv.par='a')
+m_hmma$alpha #did it estimate the two regime productivity parameters?
+
+samEst::sr_plot(df=df,mod=m_hmma,type='hmm',par='a',form='tmb',title='simulation')
+```
+
+The plot on the left indicates the two distributions for the S-R curves in each regime. The plot on the right indicates the probability each observation (brood cohort/year) falls within each regime (high or low, note one could have more possible regimes but we only consider 2)
+
+Of course, reality is never so simple - how do these perform when genuine parameter changes are in a continuous realm? We'll simulate two random walks
+
+```{r}
+#Productivity as a random walk with two trends - this will be highly variable per run
+alpha[1]=2
+sig_a=0.1
+for(t in 2:c(L/2)){alpha[t]=alpha[t-1]+rnorm(1,-0.03,1)*sig_a}
+for(t in c(L/2+1):L){alpha[t]=alpha[t-1]+rnorm(1,0.05,1)*sig_a}
+plot(alpha,type='l')
+```
+
+```{r}
+for(t in 5:L){
+  RS[t]=ricker_RS(alpha[t],beta,sigma,S=S[t-4]) #draw productivity in each year
+  R[t]=exp(RS[t])*S[t-4] #transform into recruits by converting logRS to RS (recruits per spawner) times spawners
+  S[t]=R[t]*U[t] #escapement left after harvest
+}
+
+#Pare down the time-series and align the spawners and recruit estimates (which are currently staggered 4 years)
+S=S[-((L-3):L)] #Chop off the final spawner estimate to retain just the length L
+R<-R[5:L]
+RS<-RS[5:L]
+df=data.frame(S=S,R=R,logRS=RS,by=seq(1:30)) #Make a dataframe with the required information for samEst
+ 
+ggplot2::ggplot(df, aes(S, R)) +
+      geom_point(aes(colour = by),size=2.5) +
+      scale_colour_viridis_c(name='Year')+
+      xlab("Spawners") + 
+      ylab("Recruits")+
+      xlim(0, max(df$S))+
+      ylim(0, max(df$R))
+```
+
+```{r}
+m_hmma=ricker_hmm_TMB(data=df, tv.par='a')
+
+samEst::sr_plot(df=df,mod=m_hmma,type='hmm',par='a',form='tmb',title='simulation')
+
+#You can extract the probabilities for each brood cohort belonging to a particular regime:
+m_hmma$probregime
+```
+
+As you can see it's a bit less flexible than the random walk model - in that ultimately it tries to reduce down the trends in the series to a series of discrete regime states with fixed parameter values - rather than a continuous evolution as in the random walk model.
+
+These models can potentially fit some real datasets better, however, which may reflect that S-R dynamics in these stocks can largely be simplified into two regime states.
+
+Similar to the other models - you can change either the productivity (alpha) or capacity (beta) by regime.
+
+Once you've finished with Hidden Markov Models, feel free to move onto the final section where you will fit and compare these models to real data.

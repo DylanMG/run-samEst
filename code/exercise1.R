@@ -2,9 +2,8 @@
 
 #Dependencies: please install these
 #install.packages('gsl')
-remotes::install_git('https://github.com/Pacific-salmon-assess/samEst')
-library(samEst)
-library(ggplot2)
+#remotes::install_git('https://github.com/Pacific-salmon-assess/samEst')
+#library(samEst)
 
 #Function: this function gives a stochastic draw from a Ricker function with defined parameters
 ricker_RS=function(alpha,beta,S,sigma){
@@ -17,13 +16,13 @@ ricker_RS=function(alpha,beta,S,sigma){
 #Let's simulate a super simplified S-R time-series with these parameters:
 
 #Key parameters: alpha, beta, and sigma
-alpha<- 2
-beta<- 1/(1000) #often easier to work in Smax (1/beta) as its far more interpretable
-sigma<- 0.6 #ranges from ~0.2 to 1.5 for most Pacific salmon stocks
-Seq<-alpha/beta
+alpha<- 2 # productivity - usually ranges from ~ 0.5 - 3
+beta<- 1/(1000) # capacity rate -often easier to conceptualize as Smax (1/beta) as its far more interpretable
+sigma<- 0.6 # ranges from ~0.2 to 1.5 for most Pacific salmon stocks
+Seq<-alpha/beta # equilibrium spawners - just used for the simulation start points
 
 #Simulation parameters:
-L=30+4 #length of time-series - here 30 years, we add 4 to
+L=30+4 #length of time-series - here 30 years (+4 for starting cohorts)
 RS=numeric(L) #productivity in each year
 S=numeric(L);S[1:4]=runif(4,Seq*0.8,Seq*1.2) #spawners in each year, we start with an initial escapement of 600 individuals
 R=numeric(L) #recruits in each year
@@ -70,6 +69,7 @@ m1<- samEst::compile_code(type='static', ac=FALSE, par='n',lambertW = FALSE)
 m_stan <- samEst::ricker_stan(data=df,mod=m1) #Stan estimate
 m_stan$stanfit #summary for the Stan fit
 
+
 m_tmb <- samEst::ricker_TMB(data=df, priors=1) #TMB estimate, priors = 1 means yes include priors for estimate
 m_tmb$alpha #productivity 
 m_tmb$beta #capacity rate
@@ -80,29 +80,16 @@ m_tmb$alpha/alpha #productivity
 m_tmb$beta/beta #capacity rate
 m_tmb$sig/sigma #sigma
 
-#Let's visualize the S-R curve for these fits:
-x_new=seq(min(df$S),max(df$S),length.out=200) #New vector to predict
-#Predict Recruits by transforming the expectation for log(R/S) at each level of spawners
-pred_df=data.frame(pred=exp(m_tmb$alpha-m_tmb$beta*x_new)*x_new,x_new=x_new)
-
-ggplot2::ggplot(df, aes(S, R)) +
-  geom_line(data=pred_df,aes(x=x_new,y=pred),linewidth=1.3)+
-  geom_point(aes(colour = by),size=2.5) +
-  scale_colour_viridis_c(name='Year')+
-  ggtitle(title)+
-  xlab("Spawners") + 
-  ylab("Recruits")+
-  xlim(0, max(df$S))+
-  ylim(0, max(df$R))+
-  theme(panel.background = element_blank(),strip.background = element_rect(colour=NA, fill=NA),panel.border = element_rect(fill = NA, color = "black"),
-        strip.text = element_text(face="bold", size=12),
-        axis.text=element_text(face="bold"),axis.title = element_text(face="bold"),plot.title = element_text(face = "bold", hjust = 0.5,size=15))
+#samEst has some plot functions to quickly visualize the relationship
+samEst::sr_plot(df=df,mod=m_stan,type='static',form='stan')
+samEst::sr_plot(df=df,mod=m_tmb,type='static',form='tmb')
 
 
+#Try changing the length of the S-R series or the level of error in productivity (sigma) to compare
 
 #E1.2 - Sampling Error####
-#What if we don't have a perfect census?
 
+#What if we don't have a perfect census?
 #Let's define the level of error (coefficient of variation here - eg. sd/mean)
 CV=0.1
 #Adjust the CV to different levels (in reality we would... hope.. it usually falls in the 0.1 to 0.3 realm)
@@ -132,9 +119,10 @@ plot(R_obs~S_obs,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Re
 plot(RS_obs~S_obs,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
 
 #Does this change the parameters?
-m=lm(RS_obs~S_obs)
-summary(m)
+m2=lm(RS_obs~S_obs)
+summary(m2)
 
+m$coefficient[1]/m2$coefficient[2]
 
 #What if the sampling error changes over time?
 CV1=0.4 #coefficient of variation - period 1
@@ -190,6 +178,3 @@ Umsy_obs=1-gsl::lambert_W0(exp(1-m$coefficients[1]))
 
 Umsy
 Umsy_obs
-
-
-#E1.4 - Autocorrelated residuals####

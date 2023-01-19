@@ -72,7 +72,7 @@ S_pred=seq(min(S),max(S),length.out=200)
 pred_R=exp(m$coefficient[1]+m$coefficient[2]*S_pred)*S_pred
 
 par(mfrow=c(1,2))
-plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5),xlim=c(0,max(S)),ylim=c(0,max(R))) #Spawner Recruit curve
 lines(pred_R~S_pred)
 
 plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
@@ -89,24 +89,11 @@ summary(m)$sigma/sigma #standard error (sigma)
 #As a fraction of the true value - eg. 1.17 = 17% higher, 0.91 = 9% lower
 ```
 
-Now, fit in samEst - options for Stan:
-
+Now, fit in samEst - we'll stick with TMB over Stan for most of this, but look to the final section for all of the examples for fitting these same models in Stan:
 ```{r}
 df=data.frame(S=S,R=R,logRS=RS,by=seq(1:30)) #Make a dataframe with the required information for samEst
 #That is Recruits (R), Spawners (S), productivity (logRS), and brood years (a vector of years = 1998, 1999,..., etc)
 
-#First we need to declare the model, here the 'static' Ricker (ac=FALSE indicates no autocorrelation, see further below):
-m1<- samEst::compile_code(type='static', ac=FALSE, par='n',lambertW = FALSE)
-
-#Then that model to our data:
-m_stan <- samEst::ricker_stan(data=df,mod=m1) #Stan estimate
-m_stan$mcmcsummary[1:4,] #summary for the Stan fit for our parameters of interest - look at Rhat as a quick diagnostic of the fit (should be <1.1)
-
-```
-
-And in TMB:
-
-```{r}
 m_tmb <- samEst::ricker_TMB(data=df, priors=1) #TMB estimate, priors = 1 means yes include priors for estimate (recommended)
 
 #We can draw out the MLE approximation estimates:
@@ -123,7 +110,6 @@ m_tmb$sig/sigma #sigma
 Let's quickly visualize the fit - using some standardized S-R plots from the sr_plot function in samEst:
 
 ```{r}
-samEst::sr_plot(df=df,mod=m_stan$stanfit,type='static',form='stan',title='stan estimate')
 samEst::sr_plot(df=df,mod=m_tmb,type='static',form='tmb',title='tmb estimate')
 ```
 
@@ -137,23 +123,27 @@ The previous simulation is a bit overly optimistic. It assumes that we know with
 
 ```{r}
 #Let's start by assigning the level of sampling/measurement error
-CV=0.1
-#Adjust the CV to different levels (in reality we would... hope.. it usually falls in the 0.1 to 0.3 realm)
+CV_S=0.1 #error in spawner estimates
+CV_R=0.2 #error in recruit estimates
+
+#Try adjusting the CV to different levels (in reality we would... hope.. it usually falls in the 0.1 to 0.3 realm)
 
 #Let's add in sampling error to just our estimate of spawners returning to natal streams
-S_obs=rnorm(length(S),S,CV*S)
+S_obs=rnorm(length(S),S,CV_S*S)
+#And recruits
+R_obs=rnorm(length(R),R,CV_R*R)
 
 #Similarly this will change our estimates of productivity from the sampled data:
-RS_obs=log(R/S_obs)
+RS_obs=log(R_obs/S_obs)
 
 #Plot out S-R fits
 m=lm(RS_obs~S_obs)
 
 par(mfrow=c(1,2))
-plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+plot(R_obs~S_obs,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
 lines(pred_R~S_pred)
 
-plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+plot(RS_obs~S_obs,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
 abline(m)
 
 unname((m$coefficients[1])/alpha) #productivity
@@ -164,33 +154,6 @@ summary(m)$sigma/sigma #standard error (sigma)
 
 Adjust the coefficient of variation (CV) to see how this influences estimates for the known parameters.
 
-In reality there is also error in our estimates of the adult recruits from a cohort (e.g. missing components of catch).
-
-```{r}
-#Let's start by assigning the level of sampling/measurement error
-CV=0.1
-#Adjust the CV to different levels (in reality we would... hope.. it usually falls in the 0.1 to 0.3 realm)
-
-#Error in our estimate of recruits 
-R_obs=rnorm(length(R),R,CV*R)
-#And what our estimates of productivity would then be from sampled data:
-RS_obs=log(R_obs/S_obs)
-
-#Plot out S-R fits
-m=lm(RS_obs~S_obs)
-
-par(mfrow=c(1,2))
-plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
-lines(pred_R~S_pred)
-
-plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
-abline(m)
-
-unname((m$coefficients[1])/alpha) #productivity
-unname(abs(m$coefficients[2])/beta) #capacity rate
-summary(m)$sigma/sigma #standard error (sigma)
-
-```
 
 What if the sampling error changes over time - eg. change in methodology
 
@@ -225,7 +188,7 @@ summary(m)$sigma/sigma #standard error (sigma)
 
 Try varying the coefficient of variation.
 
-What can you conclude about how sampling error influnces parameter estimates?
+What can you conclude about how sampling error influences parameter estimates?
 
 #E1.3: Reference points
 
@@ -252,7 +215,7 @@ Umsy = 1-gsl::lambert_W0(exp(1-alpha))
 Umsy
 ```
 
-Check how estimated parameters relate to the real ones
+Check how estimated parameters relate to the real ones from your simulation:
 ```{r}
 Smax_obs=1/-m$coefficients[2]
 Smax_obs

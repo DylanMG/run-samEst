@@ -1,0 +1,185 @@
+---
+title: "Exercise 4: Enter the 'real' world"
+format:
+  html:
+    theme: default
+---
+
+```{r}
+library(samEst)
+library(gsl)
+library(ggplot)
+```
+
+Here feel free to select a spawner-recruit dataset from ones (88 examples) we've provided from all across BC - or you can randomly choose one of these stocks.
+
+```{r}
+stock_info<- read.csv("data/psalmon_info.csv")
+stock_dat<-read.csv("data/psalmon_sr.csv")
+
+stock_info$stock.name
+```
+
+
+You'll want to extract the spawner-recruit data for whatever stock you're interested in examining. You can either use the 'stock.id' column, which matches between stock_info and stock_dat or just subset based on the stock name (which is separated in the stock_data set)
+
+```{r}
+
+#eg. for Cowichan chinook
+sr<-subset(stock_dat,stock=="Cowichan"&species=="Chinook")
+#eg. Nicola chinook
+sr<-subset(stock_dat,stock=="Nicola"&species=="Chinook")
+
+#or pick a stock at random
+sr<-subset(stock_dat,stock.id==sample(stock_info$stock.id,1))
+
+head(sr)
+```
+
+To start it's easiest to assign these to a new dataset as we have to feed in particular column names to the model so it knows what is what
+
+```{r}
+#modify data structure for use with samEst models
+srdat<-data.frame(stock=paste(sr$stock,sr$species),
+  by=sr$broodyear,
+  S=sr$spawners,
+  R=sr$recruits,
+  logRS=log(sr$recruits/sr$spawners))
+
+#Visualize the data
+plot(R~S,data=srdat,bty='l',cex=1.2,xlim=c(0,max(S)),ylim=c(0,max(R)))
+```
+
+We can start with the classic Ricker
+```{r}
+p <- ricker_TMB(data=srdat) #note you might get an error here - other models might still fit though
+
+#Can quickly visualize the classic Ricker fit to your data with sr_plot
+samEst::sr_plot(df=srdat,mod=p,type='static',form='tmb',title=srdat$stock)
+
+
+#Things to observe - does the function fit the observed data well? Are there extreme outliers? The data are coloured by brood cohort year, do you notice any particular trends in terms of the residuals or position of observations over time?
+```
+
+Try this model with autocorrelation in the residuals (very common, usually positive).
+```{r}
+pac<-ricker_TMB(data=srdat, AC=TRUE)
+
+samEst::sr_plot(df=srdat,mod=pac,type='static',form='tmb',title=srdat$stock)
+
+#Did this shift the curve much?
+
+#The AR1 correlation coefficient can be extract as 'rho', indicating the average linear correlation between the residuals in a year and residuals 1-year forward.
+pac$rho
+```
+
+Now we can fit more complex models to the data:
+
+Random walk in productivity:
+```{r}
+ptva<- ricker_rw_TMB(data=srdat, tv.par="a")
+
+samEst::sr_plot(df=srdat,mod=ptva,type='rw',par='a',form='tmb',title=srdat$stock)
+```
+
+RW capacity:
+```{r}
+ptvb<- ricker_rw_TMB(data=srdat, tv.par="b")
+
+samEst::sr_plot(df=srdat,mod=ptvb,type='rw',par='b',form='tmb',title=srdat$stock)
+```
+
+Both:
+```{r}
+ptvab<- ricker_rw_TMB(data=srdat, tv.par="both")
+
+samEst::sr_plot(df=srdat,mod=ptvab,type='rw',par='both',form='tmb',title=srdat$stock)
+```
+
+Flip through these plots to see the differences.
+
+Hidden markov models:
+
+Productivity
+```{r}
+phmma<- ricker_hmm_TMB(data=srdat, tv.par="a")
+
+samEst::sr_plot(df=srdat,mod=phmma,type='hmm',par='a',form='tmb',title=srdat$stock)
+```
+
+Capacity
+```{r}
+phmmb<- ricker_hmm_TMB(data=srdat, tv.par="b")
+
+samEst::sr_plot(df=srdat,mod=phmmb,type='hmm',par='b',form='tmb',title=srdat$stock)
+```
+Both
+```{r}
+phmmab<- ricker_hmm_TMB(data=srdat, tv.par="both")
+
+samEst::sr_plot(df=srdat,mod=phmmab,type='hmm',par='both',form='tmb',title=srdat$stock)
+```
+
+
+What seems to be the model that best captures this stocks S-R dynamics through time?
+```{r}
+AICdf<-data.frame(AIC=c(p$AICc,
+                        pac$AICc,
+                        ptva$AICc,
+                        ptvb$AICc, 
+                        ptvab$AICc,
+                        phmma$AICc,
+                        phmmb$AICc,
+                        phmmab$AICc),
+                  model=c("simple",
+                           "simple ac",
+                           "rw alpha",
+                           "rw beta",
+                           "rw alpha and beta",
+                           "regime shift alpha",
+                           "regime shift  beta",
+                           "regime shift alpha and beta")                
+                  )                          
+#lowest value = highest likelihood
+AICdf
+
+#We also have a function estimate the model weights:
+mw=round(samEst::model_weights(AICdf[,1],form='AIC'),2)
+names(mw)=AICdf[,2]
+mw
+```
+
+Feel free to try this for various stocks and see what you can conclude about any signals of changing S-R dynamics. The last section provides stan code options for the same set of models - consider these optional (as opposed to everything else, which was strictly mandatory of course).
+
+#Stan code
+
+If you're setup to run rstan you can try these same models in a Bayesian framework. Note it may take awhile to compile these models
+
+```{r}
+simple_mod <- samEst::compile_code(type='static', ac=FALSE, par='n',lambertW = FALSE)
+simpleac_mod <- samEst::compile_code(type='static', ac=TRUE, par='n',lambertW = FALSE)
+rwa_mod <- samEst::compile_code(type='rw',ac=FALSE,par="a",lambertW = FALSE)
+rwb_mod <- samEst::compile_code(type='rw',ac=FALSE,par="b",lambertW = FALSE)
+rwab_mod <- samEst::compile_code(type='rw',ac=FALSE,par="both",lambertW = FALSE)
+hmma_mod <- samEst::compile_code(type='hmm',ac=FALSE,par="a",lambertW = FALSE)
+hmmb_mod <- samEst::compile_code(type='hmm',ac=FALSE,par="b",lambertW = FALSE)
+hmmab_mod <- samEst::compile_code(type='hmm',ac=FALSE,par="both",lambertW = FALSE)
+
+b <- ricker_stan(data=srdat,iter = 2000, mod=simple_mod)
+bac <- ricker_stan(data=srdat, iter = 2000, AC=TRUE, mod=simpleac_mod )
+btva <- ricker_rw_stan(data=srdat, par="a",iter = 800)
+btvb <- ricker_rw_stan(data=srdat, par="b",iter = 800, mod=rwb_mod)
+btvab <- ricker_rw_stan(data=srdat, par="both",iter = 800, mod=rwab_mod) 
+bhmma <- ricker_hmm_stan(data=srdat, par="a",iter = 800, mod=hmma_mod)
+bhmmb <- ricker_hmm_stan(data=srdat, par="b",iter = 800, mod=hmmb_mod)
+bhmmab <- ricker_hmm_stan(data=srdat, par="both",iter = 800,mod=hmmab_mod) 
+
+samEst::sr_plot(df=srdat,mod=b$stanfit,type='static',form='stan',title=srdat$stock)
+samEst::sr_plot(df=srdat,mod=bac$stanfit,type='static',form='stan',title=srdat$stock)
+samEst::sr_plot(df=srdat,mod=btva$stanfit,type='rw',form='stan',par='a',title=srdat$stock)
+samEst::sr_plot(df=srdat,mod=btvb$stanfit,type='rw',form='stan',par='b',title=srdat$stock)
+samEst::sr_plot(df=srdat,mod=btvab$stanfit,type='rw',form='stan',par='both',title=srdat$stock)
+samEst::sr_plot(df=srdat,mod=bhmma$stanfit,type='hmm',form='stan',par='a',title=srdat$stock)
+samEst::sr_plot(df=srdat,mod=bhmmb$stanfit,type='hmm',form='stan',par='b',title=srdat$stock)
+samEst::sr_plot(df=srdat,mod=bhmmab$stanfit,type='hmm',form='stan',par='both',title=srdat$stock)
+```
