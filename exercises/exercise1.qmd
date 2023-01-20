@@ -71,12 +71,15 @@ m=lm(RS~S)
 S_pred=seq(min(S),max(S),length.out=200)
 pred_R=exp(m$coefficient[1]+m$coefficient[2]*S_pred)*S_pred
 
-par(mfrow=c(1,2))
+par(mfrow=c(1,3))
 plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5),xlim=c(0,max(S)),ylim=c(0,max(R))) #Spawner Recruit curve
 lines(pred_R~S_pred)
 
 plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
 abline(m)
+
+plot(m$residuals,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5),xlab="BY",ylab="residuals")
+abline(h=0)
 
 ```
 
@@ -117,6 +120,21 @@ samEst::sr_plot(df=df,mod=m_tmb,type='static',form='tmb',title='tmb estimate')
 Now, return to the beginning of Exercise 1.1 and try changing the parameters (ie. alpha, beta, sigma) or the conditions of the S-R time-series such as length of series, harvest rate. Re-run these sections to visualize changes in the curves and data and how this affects the precision of the parameter estimates.
 
 
+```{r}
+df$residuals<-m_tmb$residuals
+ggplot(df, aes(by, residuals))+
+geom_point(aes(colour = residuals), stroke=2)+
+geom_hline(yintercept=0,linewidth=1.3)+
+scale_colour_viridis_c(name='p')+
+ggtitle("Residuals")+
+theme_classic(14)+
+theme(panel.background = element_blank(),strip.background = element_rect(colour=NA, fill=NA),panel.border = element_rect(fill = NA, color = "black"),
+                  strip.text = element_text(face="bold", size=12),
+                  axis.text=element_text(face="bold"),axis.title = element_text(face="bold"),plot.title = element_text(face = "bold", hjust = 0.5,size=15))
+          
+
+```
+
 #E1.2: Sampling error
 
 The previous simulation is a bit overly optimistic. It assumes that we know with full accuracy the true spawners and recruits generated under that model in a given year. Of course, the reality is that our estimates often have high levels of sampling error - we're going to incorporate that and see how it affects our inferences.
@@ -139,12 +157,15 @@ RS_obs=log(R_obs/S_obs)
 #Plot out S-R fits
 m=lm(RS_obs~S_obs)
 
-par(mfrow=c(1,2))
+par(mfrow=c(1,3))
 plot(R_obs~S_obs,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
 lines(pred_R~S_pred)
 
 plot(RS_obs~S_obs,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
 abline(m)
+
+plot(m$residuals,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5),xlab="BY",ylab="residuals")
+abline(h=0)
 
 unname((m$coefficients[1])/alpha) #productivity
 unname(abs(m$coefficients[2])/beta) #capacity rate
@@ -173,12 +194,15 @@ RS_obs=log(R_obs/S_obs)
 #Plot out S-R fits
 m=lm(RS_obs~S_obs)
 
-par(mfrow=c(1,2))
+par(mfrow=c(1,3))
 plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
 lines(pred_R~S_pred)
 
 plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
 abline(m)
+
+plot(m$residuals,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5),xlab="BY",ylab="residuals")
+abline(h=0)
 
 unname((m$coefficients[1])/alpha) #productivity
 unname(abs(m$coefficients[2])/beta) #capacity rate
