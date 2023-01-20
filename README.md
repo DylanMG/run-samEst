@@ -1,6 +1,8 @@
 # run-samEst
 Workshop on using the samEst R package - non-stationary spawner-recruit models for Pacific salmon
 
+Catarina Wor (catarina.wor@dfo-mpo.gc.ca)
+Dan Greenberg (dan.greenberg@dfo-mpo.gc.ca)
 
 # Before the workshop
 
@@ -12,15 +14,9 @@ samEst depends on the R packages TMB and the latest version of stan. So we need 
 
 If you run into problems, please submit an issue in this repository. 
 
+## Exercises
+
+Navigate to the exercises folder to find some Quarto workbooks to go through. There should be 4 exercises, the last of which will have you fitting models to real data.
+
 ## Data 
-You can run the workshop on your own data or examples can be provided. Let Dan Greenberg (dan.greenberg@dfo-mpo.gc.ca) and Catarina Wor (catarina.wor@dfo-mpo.gc.ca) know in advance if you would like to be assigned an example data set.
-
-
-# TODO
-
--write scripts for the workshop
- - Read in data (your own or examples provided).
- - Run TMB models (stan would take too long??)
- - run model selection criteria 
- - plot results
- - discussion questions
+You can run the workshop on your own data, if you have it available, you will just need to format it correctly (see examples in exercises4.qmd). We are providing ~88 stocks in BC to experiment with see 'data' that you can select for exercise 4.
