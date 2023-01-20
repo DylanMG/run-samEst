@@ -80,7 +80,7 @@ abline(m)
 
 ```
 
-How close are the paramaeters to their simulated value?
+How close are the parameters to their simulated value?
 ```{r}
 unname((m$coefficients[1])/alpha) #productivity
 unname(abs(m$coefficients[2])/beta) #capacity rate
@@ -155,7 +155,7 @@ summary(m)$sigma/sigma #standard error (sigma)
 Adjust the coefficient of variation (CV) to see how this influences estimates for the known parameters.
 
 
-What if the sampling error changes over time - eg. change in methodology
+What if the sampling error changes over time - e.g., change in methodology
 
 ```{r}
 CV1=0.4 #coefficient of variation - period 1
@@ -205,11 +205,11 @@ Smax
 Smsy - Spawner abundance that maximizes sustainable yield. Note the lambert function allows for an explicit solution for calculating Smsy (Scheuerell 2016 PeerJ)
 
 ```{r}
-Smsy = (1 − gsl::lambert_W0(exp(1 - alpha)))/beta
+Smsy = (1 - gsl::lambert_W0(exp(1 - alpha)))/beta
 Smsy
 ```
 
-Umsy - the corresponding harvest rate that would achieve Smsy
+Umsy - the corresponding harvest rate that would achieve Smsy (under equilibrium conditions)
 ```{r}
 Umsy = 1-gsl::lambert_W0(exp(1-alpha))
 Umsy
@@ -224,7 +224,7 @@ Smax_obs/Smax
 ```
 
 ```{r}
-Smsy_obs=(1 − gsl::lambert_W0(exp(1-m$coefficients[1])))/-m$coefficients[2]
+Smsy_obs=(1 - gsl::lambert_W0(exp(1-m$coefficients[1])))/-m$coefficients[2]
 Smsy
 Smsy_obs
 Smsy_obs/Smsy
