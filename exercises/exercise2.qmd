@@ -69,6 +69,24 @@ R_pred=exp(m$coefficient[1]+m$coefficient[2]*S_pred)*S_pred
       ylim(0, max(df$R))
 ```
 
+Let's look at the residuals too. 
+```{r}
+df$residuals<-m$residuals
+ggplot(df, aes(by, residuals))+
+geom_point(aes(colour = residuals), stroke=2)+
+geom_hline(yintercept=0,linewidth=1.3)+
+scale_colour_viridis_c(name='p')+
+ggtitle("Residuals")+
+theme_classic(14)+
+theme(panel.background = element_blank(),strip.background = element_rect(colour=NA, fill=NA),panel.border = element_rect(fill = NA, color = "black"),
+                  strip.text = element_text(face="bold", size=12),
+                  axis.text=element_text(face="bold"),axis.title = element_text(face="bold"),plot.title = element_text(face = "bold", hjust = 0.5,size=15))
+          
+
+```
+
+
+
 Let's see if we can explicitly recover this trend using a Ricker model with time-varying (random walk) in productivity:
 
 ```{r}
@@ -80,7 +98,22 @@ m_rwa_tmb<- samEst::ricker_rw_TMB(data=df,tv.par='a')
 m_rwa_tmb$alpha
 
 #Plot the fit to the data
-samEst::sr_plot(df=df,mod=m_rwa_tmb,type='rw',par='a',form='tmb',title='simulation')
+samEst::sr_plot(df=df,mod=m_rwa_tmb,type='rw',par='a',form='tmb',title='fit to simulated data')
+
+
+#plot residuals
+df$residuals<-m_rwa_tmb$residuals
+ggplot(df, aes(by, residuals))+
+geom_point(aes(colour = residuals), stroke=2)+
+geom_hline(yintercept=0,linewidth=1.3)+
+scale_colour_viridis_c(name='p')+
+ggtitle("Residuals")+
+theme_classic(14)+
+theme(panel.background = element_blank(),strip.background = element_rect(colour=NA, fill=NA),panel.border = element_rect(fill = NA, color = "black"),
+                  strip.text = element_text(face="bold", size=12),
+                  axis.text=element_text(face="bold"),axis.title = element_text(face="bold"),plot.title = element_text(face = "bold", hjust = 0.5,size=15))
+          
+
 
 ```
 
@@ -148,6 +181,22 @@ m_rwb_tmb<- samEst::ricker_rw_TMB(data=df,tv.par='b')
 m_rwb_tmb$Smax
 
 samEst::sr_plot(df=df,mod=m_rwb_tmb,type='rw',par='b',form='tmb',title='simulation')
+```
+
+Let's look at the residuals too. 
+```{r}
+df$residuals<-m_rwb_tmb$residuals
+ggplot(df, aes(by, residuals))+
+geom_point(aes(colour = residuals), stroke=2)+
+geom_hline(yintercept=0,linewidth=1.3)+
+scale_colour_viridis_c(name='p')+
+ggtitle("Residuals")+
+theme_classic(14)+
+theme(panel.background = element_blank(),strip.background = element_rect(colour=NA, fill=NA),panel.border = element_rect(fill = NA, color = "black"),
+strip.text = element_text(face="bold", size=12),
+                  axis.text=element_text(face="bold"),axis.title = element_text(face="bold"),plot.title = element_text(face = "bold", hjust = 0.5,size=15))
+          
+
 ```
 
 ```{r}
