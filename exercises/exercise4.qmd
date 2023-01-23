@@ -14,8 +14,8 @@ library(ggplot2)
 Here feel free to select a spawner-recruit dataset from ones (88 examples) we've provided from all across BC - or you can randomly choose one of these stocks.
 
 ```{r}
-stock_info<- read.csv("data/psalmon_info.csv")
-stock_dat<-read.csv("data/psalmon_sr.csv")
+stock_info<- read.csv(here::here("data/psalmon_info.csv"))
+stock_dat<-read.csv(here::here("data/psalmon_sr.csv"))
 
 stock_info$stock.name
 ```
