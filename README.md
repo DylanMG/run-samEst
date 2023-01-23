@@ -21,3 +21,7 @@ Navigate to the exercises folder to find some Quarto workbooks to go through. Th
 ## Data 
 
 You can run the workshop on your own data, if you have it available, you will just need to format it correctly (see examples in exercises4.qmd). We are providing ~88 stocks in BC to experiment with see 'data' that you can select for exercise 4.
+
+## Questions
+
+If you have any questions about the content of this workshop feel free to add it to this public Google doc: https://docs.google.com/document/d/16u9KEdEqm47sS43yqLZKvmUXecy-3cstJGjgLIxhUUM/edit?usp=sharing
