@@ -46,19 +46,21 @@ What we are creating is a very simplified model to generate stock recruitment da
 
 ```{r,fig.width=6,fig.height=3}
 for(t in 5:L){
-  RS[t]=ricker_RS(alpha,beta,sigma,S=S[t-4]) #draw productivity in each year
-  R[t]=exp(RS[t])*S[t-4] #transform into recruits by converting logRS to RS (recruits per spawner) times spawners
-  S[t]=R[t]*U[t] #escapement left after harvest
+  RS[t] = ricker_RS(alpha,beta, 
+                  sigma, 
+                  S=S[t-4]) #draw productivity in each year
+  R[t] = exp(RS[t])*S[t-4] #transform into recruits by converting logRS to RS (recruits per spawner) times spawners
+  S[t] = R[t]*U[t] #escapement left after harvest
 }
 
 #Pare down the time-series and align the spawners and recruit estimates (which are currently staggered 4 years)
-S=S[-((L-3):L)] #Chop off the final spawner estimate to retain just the length L
-R<-R[5:L]
-RS<-RS[5:L]
+S = S[-((L-3):L)] #Chop off the final spawner estimate to retain just the length L
+R <- R[5:L]
+RS <- RS[5:L]
 
-par(mfrow=c(1,2))
-plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
-plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+par(mfrow = c(1,2))
+plot(R~S, bty='l', pch=21, bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+plot(RS~S, bty='l', pch=21, bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
 
 ```
 
@@ -141,7 +143,7 @@ The previous simulation is a bit overly optimistic. It assumes that we know with
 
 ```{r}
 #Let's start by assigning the level of sampling/measurement error
-CV_S=0.1 #error in spawner estimates
+CV_S=0.3 #error in spawner estimates
 CV_R=0.2 #error in recruit estimates
 
 #Try adjusting the CV to different levels (in reality we would... hope.. it usually falls in the 0.1 to 0.3 realm)
@@ -185,24 +187,24 @@ P1=round(N*0.3) #duration of sampling period 1
 
 #generate observations for each period:
 S_obs[1:P1]=rnorm(P1,S[1:P1],CV1*S[1:P1]) #Estimates in the first sampling period
-S_obs[c(P1+1):N]=rnorm(N-P1,S[c(P1+1):N],CV2*S[c(P1+1):N]) #Estimates in the second sampling perido
+S_obs[c(P1+1):N]=rnorm(N-P1,S[c(P1+1):N],CV2*S[c(P1+1):N]) #Estimates in the second sampling period
 R_obs[1:P1]=rnorm(P1,R[1:P1],CV1*R[1:P1]) #Estimates in the first sampling period
-R_obs[c(P1+1):N]=rnorm(N-P1,R[c(P1+1):N],CV2*R[c(P1+1):N]) #Estimates in the second sampling perido
+R_obs[c(P1+1):N]=rnorm(N-P1,R[c(P1+1):N],CV2*R[c(P1+1):N]) #Estimates in the second sampling period
 
 RS_obs=log(R_obs/S_obs)
 
 #Plot out S-R fits
 m=lm(RS_obs~S_obs)
 
-par(mfrow=c(1,3))
-plot(R~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+par(mfrow = c(1,3))
+plot(R~S, bty='l', pch=21, bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
 lines(pred_R~S_pred)
 
-plot(RS~S,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5)) #Spawner Recruit curve
+plot(RS~S,bty = 'l',pch = 21,bg = adjustcolor('black', alpha.f = 0.5)) #Spawner Recruit curve
 abline(m)
 
-plot(m$residuals,bty='l',pch=21,bg=adjustcolor('black',alpha.f=0.5),xlab="BY",ylab="residuals")
-abline(h=0)
+plot(m$residuals, bty = 'l', pch = 21, bg = adjustcolor('black', alpha.f = 0.5), xlab = "BY", ylab = "residuals")
+abline(h = 0)
 
 unname((m$coefficients[1])/alpha) #productivity
 unname(abs(m$coefficients[2])/beta) #capacity rate
