@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.1.189">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Exercise 2: Random Walk Ricker</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="exercise2_files/libs/clipboard/clipboard.min.js"></script>
+<script src="exercise2_files/libs/quarto-html/quarto.js"></script>
+<script src="exercise2_files/libs/quarto-html/popper.min.js"></script>
+<script src="exercise2_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="exercise2_files/libs/quarto-html/anchor.min.js"></script>
+<link href="exercise2_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="exercise2_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="exercise2_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="exercise2_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="exercise2_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Exercise 2: Random Walk Ricker</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    
+  </div>
+  
+
+</header>
+
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(samEst);<span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">#Function: this function gives a stochastic draw from a Ricker function with defined parameters</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>ricker_RS<span class="ot">=</span><span class="cf">function</span>(alpha,beta,S,sigma){</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  RS<span class="ot">=</span><span class="fu">rnorm</span>(<span class="dv">1</span>,alpha <span class="sc">-</span> beta<span class="sc">*</span>S,sigma) <span class="co">#this draws the realized productivity (log RS) with the specified level of error</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(RS)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>In this exercise we’ll expand upon the previous simulation to examine what happens when the parameters of the Ricker curve are non-stationary in time - through several scenarios.</p>
+<p>#E2: Non-stationary (aka time-varying, aka random walk) Ricker models</p>
+<p>We’ll begin by simulating a spawner-recruit time-series from the Ricker function and to see how the parameters dictate this relationship, first start with these parameters.</p>
+<p>Starting with changes in productivity (alpha):</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Simulation parameters:</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">30</span> <span class="co">#length of time-series</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>L<span class="ot">=</span>N<span class="sc">+</span><span class="dv">4</span> <span class="co">#length of time-series +4 for starting cohorts</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#Key parameters: alpha, beta, and sigma</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fl">2.3</span>,<span class="fl">0.6</span>, <span class="at">length.out=</span>L) <span class="co"># productivity decline over 30 years</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>beta <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>(<span class="dv">1000</span>) <span class="co"># capacity rate -often easier to conceptualize as Smax (1/beta) as its far more interpretable</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>sigma <span class="ot">&lt;-</span> <span class="fl">0.3</span> <span class="co"># ranges from ~0.2 to 1.5 for most Pacific salmon stocks</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>Seq <span class="ot">&lt;-</span> alpha<span class="sc">/</span>beta <span class="co"># equilibrium spawners - just used for the simulation start points</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">#the rest of the simulation parameters</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>RS<span class="ot">=</span><span class="fu">numeric</span>(L) <span class="co">#productivity in each year</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>S<span class="ot">=</span><span class="fu">numeric</span>(L);S[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]<span class="ot">=</span><span class="fu">runif</span>(<span class="dv">4</span>,Seq<span class="sc">*</span><span class="fl">0.8</span>,Seq<span class="sc">*</span><span class="fl">1.2</span>) <span class="co">#spawners in each year, we start with an initial escapement of 600 individuals</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>R<span class="ot">=</span><span class="fu">numeric</span>(L) <span class="co">#recruits in each year</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>U<span class="ot">=</span><span class="fu">runif</span>(L,<span class="fl">0.4</span>,<span class="fl">0.6</span>) <span class="co">#Harvest rate of cohorts with low variance </span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">#(note U should be within the range of 0 to 1)</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(t <span class="cf">in</span> <span class="dv">5</span><span class="sc">:</span>L){</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  RS[t]<span class="ot">=</span><span class="fu">ricker_RS</span>(alpha[t],beta,sigma,<span class="at">S=</span>S[t<span class="dv">-4</span>]) <span class="co">#draw productivity in each year</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  R[t]<span class="ot">=</span><span class="fu">exp</span>(RS[t])<span class="sc">*</span>S[t<span class="dv">-4</span>] <span class="co">#transform into recruits by converting logRS to RS (recruits per spawner) times spawners</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>  S[t]<span class="ot">=</span>R[t]<span class="sc">*</span>U[t] <span class="co">#escapement left after harvest</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co">#Pare down the time-series and align the spawners and recruit estimates (which are currently staggered 4 years)</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>S<span class="ot">=</span>S[<span class="sc">-</span>((L<span class="dv">-3</span>)<span class="sc">:</span>L)] <span class="co">#Chop off the final spawner estimate to retain just the length L</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>R<span class="ot">&lt;-</span>R[<span class="dv">5</span><span class="sc">:</span>L]</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>RS<span class="ot">&lt;-</span>RS[<span class="dv">5</span><span class="sc">:</span>L]</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>df<span class="ot">=</span><span class="fu">data.frame</span>(<span class="at">S=</span>S,<span class="at">R=</span>R,<span class="at">logRS=</span>RS,<span class="at">by=</span><span class="fu">seq</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>)) <span class="co">#Make a dataframe with the required information for samEst</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co">#We'll fit a stationary curve</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">lm</span>(RS<span class="sc">~</span>S)</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>S_pred <span class="ot">&lt;-</span><span class="fu">seq</span>(<span class="fu">min</span>(S),<span class="fu">max</span>(S),<span class="at">length.out=</span><span class="dv">200</span>)</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>R_pred <span class="ot">&lt;-</span> <span class="fu">exp</span>(m<span class="sc">$</span>coefficient[<span class="dv">1</span>]<span class="sc">+</span>m<span class="sc">$</span>coefficient[<span class="dv">2</span>]<span class="sc">*</span>S_pred)<span class="sc">*</span>S_pred </span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>df_pred <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">S_pred =</span> S_pred,</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>                      <span class="at">R_pred =</span> R_pred)</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a> ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(S, R)) <span class="sc">+</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a> <span class="fu">geom_line</span>(<span class="at">data=</span>df_pred,<span class="fu">aes</span>(<span class="at">x=</span>S_pred,<span class="at">y=</span>R_pred),<span class="at">linewidth=</span><span class="fl">1.3</span>)<span class="sc">+</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">colour =</span> by),<span class="at">size=</span><span class="fl">2.5</span>) <span class="sc">+</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>      <span class="fu">scale_colour_viridis_c</span>(<span class="at">name=</span><span class="st">'Year'</span>)<span class="sc">+</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>      <span class="fu">xlab</span>(<span class="st">"Spawners"</span>) <span class="sc">+</span> </span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>      <span class="fu">ylab</span>(<span class="st">"Recruits"</span>)<span class="sc">+</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>      <span class="fu">xlim</span>(<span class="dv">0</span>, <span class="fu">max</span>(df<span class="sc">$</span>S))<span class="sc">+</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>      <span class="fu">ylim</span>(<span class="dv">0</span>, <span class="fu">max</span>(df<span class="sc">$</span>R))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="exercise2_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Let’s look at the residuals too.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>residuals<span class="ot">&lt;-</span>m<span class="sc">$</span>residuals</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(by, residuals))<span class="sc">+</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">colour =</span> residuals), <span class="at">stroke=</span><span class="dv">2</span>)<span class="sc">+</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_hline</span>(<span class="at">yintercept=</span><span class="dv">0</span>,<span class="at">linewidth=</span><span class="fl">1.3</span>)<span class="sc">+</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">scale_colour_viridis_c</span>(<span class="at">name=</span><span class="st">'p'</span>)<span class="sc">+</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggtitle</span>(<span class="st">"Residuals"</span>)<span class="sc">+</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_classic</span>(<span class="dv">14</span>)<span class="sc">+</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">theme</span>(<span class="at">panel.background =</span> <span class="fu">element_blank</span>(),<span class="at">strip.background =</span> <span class="fu">element_rect</span>(<span class="at">colour=</span><span class="cn">NA</span>, <span class="at">fill=</span><span class="cn">NA</span>),<span class="at">panel.border =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">color =</span> <span class="st">"black"</span>),</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>                  <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">face=</span><span class="st">"bold"</span>, <span class="at">size=</span><span class="dv">12</span>),</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">axis.text=</span><span class="fu">element_text</span>(<span class="at">face=</span><span class="st">"bold"</span>),<span class="at">axis.title =</span> <span class="fu">element_text</span>(<span class="at">face=</span><span class="st">"bold"</span>),<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">hjust =</span> <span class="fl">0.5</span>,<span class="at">size=</span><span class="dv">15</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="exercise2_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Let’s see if we can explicitly recover this trend using a Ricker model with time-varying (random walk) in productivity:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>m_rwa_tmb<span class="ot">&lt;-</span> samEst<span class="sc">::</span><span class="fu">ricker_rw_TMB</span>(<span class="at">data=</span>df,<span class="at">tv.par=</span><span class="st">'a'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>iter: 1  value: 22.10976 mgc: 4.990436 ustep: 1 
+iter: 2  mgc: 1.776357e-15 
+iter: 1  mgc: 1.776357e-15 
+Matching hessian patterns... Done
+outer mgc:  13.14388 
+iter: 1  value: -11.54649 mgc: 1.275205 ustep: 1 
+iter: 2  mgc: 7.993606e-15 
+iter: 1  mgc: 7.993606e-15 
+outer mgc:  6.095428 
+iter: 1  value: -22.51281 mgc: 31.99529 ustep: 1 
+iter: 2  mgc: 2.4869e-14 
+iter: 1  value: -19.20651 mgc: 7.308269 ustep: 1 
+iter: 2  mgc: 6.77236e-15 
+iter: 1  mgc: 6.77236e-15 
+outer mgc:  4.419368 
+iter: 1  value: -24.85419 mgc: 13.37766 ustep: 1 
+iter: 2  mgc: 1.387779e-14 
+iter: 1  mgc: 1.387779e-14 
+outer mgc:  5.938144 
+iter: 1  value: -29.31733 mgc: 14.95512 ustep: 1 
+iter: 2  mgc: 2.153833e-14 
+iter: 1  mgc: 2.153833e-14 
+outer mgc:  7.372955 
+iter: 1  value: -34.60025 mgc: 27.38811 ustep: 1 
+iter: 2  mgc: 2.664535e-14 
+iter: 1  mgc: 2.664535e-14 
+outer mgc:  1.744681 
+iter: 1  value: -31.06685 mgc: 12.69207 ustep: 1 
+iter: 2  mgc: 1.865175e-14 
+iter: 1  value: -34.8475 mgc: 1.44447 ustep: 1 
+iter: 2  mgc: 1.953993e-14 
+iter: 1  mgc: 1.953993e-14 
+outer mgc:  1.980833 
+iter: 1  value: -33.63677 mgc: 2.870236 ustep: 1 
+iter: 2  mgc: 3.108624e-14 
+iter: 1  mgc: 3.108624e-14 
+outer mgc:  0.5895639 
+iter: 1  value: -33.28556 mgc: 5.134099 ustep: 1 
+iter: 2  mgc: 2.930989e-14 
+iter: 1  mgc: 2.930989e-14 
+outer mgc:  0.4781391 
+iter: 1  value: -33.4008 mgc: 2.638343 ustep: 1 
+iter: 2  mgc: 1.687539e-14 
+iter: 1  mgc: 1.687539e-14 
+outer mgc:  0.1453391 
+iter: 1  value: -33.79912 mgc: 0.2438711 ustep: 1 
+iter: 2  mgc: 2.975398e-14 
+iter: 1  value: -33.58814 mgc: 0.109274 ustep: 1 
+iter: 2  mgc: 2.4869e-14 
+iter: 1  mgc: 2.4869e-14 
+outer mgc:  0.07614567 
+iter: 1  value: -33.5819 mgc: 0.1182401 ustep: 1 
+iter: 2  mgc: 3.241851e-14 
+iter: 1  mgc: 3.241851e-14 
+outer mgc:  0.002891714 
+iter: 1  value: -33.58195 mgc: 0.007189573 ustep: 1 
+iter: 2  mgc: 2.031708e-14 
+iter: 1  mgc: 2.031708e-14 
+outer mgc:  0.0001301816 
+iter: 1  value: -33.58181 mgc: 0.0002410514 ustep: 1 
+iter: 2  mgc: 1.598721e-14 
+iter: 1  mgc: 1.598721e-14 
+outer mgc:  2.450175e-05 
+iter: 1  mgc: 1.598721e-14 
+iter: 1  mgc: 1.598721e-14 
+outer mgc:  2.450175e-05 
+iter: 1  value: -33.5818 mgc: 0.07667577 ustep: 1 
+iter: 2  mgc: 2.131628e-14 
+outer mgc:  0.04281043 
+iter: 1  value: -33.5818 mgc: 0.07667577 ustep: 1 
+iter: 2  mgc: 2.753353e-14 
+outer mgc:  0.04277733 
+iter: 1  value: -33.58177 mgc: 0.03144516 ustep: 1 
+iter: 2  mgc: 3.197442e-14 
+outer mgc:  0.09304383 
+iter: 1  value: -33.58177 mgc: 0.03141373 ustep: 1 
+iter: 2  mgc: 1.731948e-14 
+outer mgc:  0.09279745 
+iter: 1  value: -33.57453 mgc: 0.01915992 ustep: 1 
+iter: 2  mgc: 1.776357e-14 
+outer mgc:  0.04030281 
+iter: 1  value: -33.58906 mgc: 0.01919828 ustep: 1 
+iter: 2  mgc: 2.842171e-14 
+outer mgc:  0.04039416 
+iter: 1  value: -33.55908 mgc: 0.01915992 ustep: 1 
+iter: 2  mgc: 2.753353e-14 
+outer mgc:  0.009262883 
+iter: 1  value: -33.60454 mgc: 0.01919828 ustep: 1 
+iter: 2  mgc: 1.731948e-14 
+outer mgc:  0.009247727 
+outer mgc:  831.8562 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">#m_rwa_tmb stores a lot of information - eg. maximum likelihood estimates for the different parameters, model code, etc.</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#Examining the point estimates for max. productivity:</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>m_rwa_tmb<span class="sc">$</span>alpha</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] 1.3656849 1.4016024 1.4451035 1.4719688 1.5100965 1.5377875 1.4893739
+ [8] 1.3896952 1.3385349 1.3330540 1.2948839 1.2320993 1.2029347 1.1441410
+[15] 1.2101837 1.1775233 1.1155161 1.0654802 1.0022125 0.9537726 0.8802258
+[22] 0.8133551 0.7461581 0.7043485 0.6788628 0.6121352 0.5408079 0.5290997
+[29] 0.4532809 0.3364317</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Plot the fit to the data</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>samEst<span class="sc">::</span><span class="fu">sr_plot</span>(<span class="at">df=</span>df,<span class="at">mod=</span>m_rwa_tmb,<span class="at">type=</span><span class="st">'rw'</span>,<span class="at">par=</span><span class="st">'a'</span>,<span class="at">form=</span><span class="st">'tmb'</span>,<span class="at">title=</span><span class="st">'fit to simulated data'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="exercise2_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">#plot residuals</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>residuals<span class="ot">&lt;-</span>m_rwa_tmb<span class="sc">$</span>residuals</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(by, residuals))<span class="sc">+</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">colour =</span> residuals), <span class="at">stroke=</span><span class="dv">2</span>)<span class="sc">+</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_hline</span>(<span class="at">yintercept=</span><span class="dv">0</span>,<span class="at">linewidth=</span><span class="fl">1.3</span>)<span class="sc">+</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="fu">scale_colour_viridis_c</span>(<span class="at">name=</span><span class="st">'p'</span>)<span class="sc">+</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">ggtitle</span>(<span class="st">"Residuals"</span>)<span class="sc">+</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_classic</span>(<span class="dv">14</span>)<span class="sc">+</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="fu">theme</span>(<span class="at">panel.background =</span> <span class="fu">element_blank</span>(),<span class="at">strip.background =</span> <span class="fu">element_rect</span>(<span class="at">colour=</span><span class="cn">NA</span>, <span class="at">fill=</span><span class="cn">NA</span>),<span class="at">panel.border =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">color =</span> <span class="st">"black"</span>),</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">face=</span><span class="st">"bold"</span>, <span class="at">size=</span><span class="dv">12</span>),</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>                  <span class="at">axis.text=</span><span class="fu">element_text</span>(<span class="at">face=</span><span class="st">"bold"</span>),<span class="at">axis.title =</span> <span class="fu">element_text</span>(<span class="at">face=</span><span class="st">"bold"</span>),<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">hjust =</span> <span class="fl">0.5</span>,<span class="at">size=</span><span class="dv">15</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="exercise2_files/figure-html/unnamed-chunk-4-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>How does it compare to the true underlying values?</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>pred_sim<span class="ot">=</span><span class="fu">data.frame</span>(<span class="at">pred=</span>m_rwa_tmb<span class="sc">$</span>alpha,<span class="at">sim=</span>alpha[<span class="dv">5</span><span class="sc">:</span>L])</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(pred_sim, <span class="fu">aes</span>(pred, sim)) <span class="sc">+</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">colour =</span> <span class="fu">as.numeric</span>(<span class="fu">rownames</span>(pred_sim))),<span class="at">size=</span><span class="fl">2.5</span>) <span class="sc">+</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">scale_colour_viridis_c</span>(<span class="at">name=</span><span class="st">'Year'</span>)<span class="sc">+</span><span class="fu">geom_abline</span>(<span class="at">intercept=</span><span class="dv">0</span>,<span class="at">slope=</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="exercise2_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Was it able to capture the underlying trend? Try changing the parameters (time-series length, trend - upwards/magnitude, sigma, etc.).</p>
+<p>You can also make the dynamics of alpha more complex or more random - feel free to use these in the simulation code above instead:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">#alpha=rnorm(L,1.5,0.5) White noise in productivity</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co">#Or a random walk: which is how it is also modelled</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">#alpha=1.5</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co">#sig_a=0.5</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co">#for(t in 2:L){alpha[t]=alpha[t-1]+rnorm(1,0,1)*sig_a}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Let’s try with changing capacity next:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Simulation parameters:</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>N<span class="ot">=</span><span class="dv">30</span> <span class="co">#length of time-series</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>L<span class="ot">=</span>N<span class="sc">+</span><span class="dv">4</span> <span class="co">#length of time-series +4 for starting cohorts</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>RS<span class="ot">=</span><span class="fu">numeric</span>(L) <span class="co">#productivity in each year</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>S<span class="ot">=</span><span class="fu">numeric</span>(L);S[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]<span class="ot">=</span><span class="fu">runif</span>(<span class="dv">4</span>,Seq<span class="sc">*</span><span class="fl">0.8</span>,Seq<span class="sc">*</span><span class="fl">1.2</span>) <span class="co">#spawners in each year, we start with an initial escapement of 600 individuals</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>R<span class="ot">=</span><span class="fu">numeric</span>(L) <span class="co">#recruits in each year</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>U<span class="ot">=</span><span class="fu">runif</span>(L,<span class="fl">0.4</span>,<span class="fl">0.6</span>) <span class="co">#Harvest rate of cohorts with low variance </span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co">#(note U should be within the range of 0 to 1)</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co">#Key parameters: alpha, beta, and sigma</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>alpha<span class="ot">&lt;-</span> <span class="fl">1.5</span> <span class="co"># productivity decline over 30 years</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>Smax<span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">2000</span>,<span class="dv">300</span>,<span class="at">length.out=</span>L) <span class="co">#Express as Smax first, just easier to conceptualize</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>beta<span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>Smax <span class="co"># capacity rate -often easier to conceptualize as Smax (1/beta) as its far more interpretable</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>sigma<span class="ot">&lt;-</span> <span class="fl">0.3</span> <span class="co"># ranges from ~0.2 to 1.5 for most Pacific salmon stocks</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>Seq<span class="ot">&lt;-</span>alpha<span class="sc">/</span>beta <span class="co"># equilibrium spawners - just used for the simulation start points</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(t <span class="cf">in</span> <span class="dv">5</span><span class="sc">:</span>L){</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  RS[t]<span class="ot">=</span><span class="fu">ricker_RS</span>(alpha,beta[t],sigma,<span class="at">S=</span>S[t<span class="dv">-4</span>]) <span class="co">#draw productivity in each year</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>  R[t]<span class="ot">=</span><span class="fu">exp</span>(RS[t])<span class="sc">*</span>S[t<span class="dv">-4</span>] <span class="co">#transform into recruits by converting logRS to RS (recruits per spawner) times spawners</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  S[t]<span class="ot">=</span>R[t]<span class="sc">*</span>U[t] <span class="co">#escapement left after harvest</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a><span class="co">#Pare down the time-series and align the spawners and recruit estimates (which are currently staggered 4 years)</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>S<span class="ot">=</span>S[<span class="sc">-</span>((L<span class="dv">-3</span>)<span class="sc">:</span>L)] <span class="co">#Chop off the final spawner estimate to retain just the length L</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>R<span class="ot">&lt;-</span>R[<span class="dv">5</span><span class="sc">:</span>L]</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>RS<span class="ot">&lt;-</span>RS[<span class="dv">5</span><span class="sc">:</span>L]</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>df<span class="ot">=</span><span class="fu">data.frame</span>(<span class="at">S=</span>S,<span class="at">R=</span>R,<span class="at">logRS=</span>RS,<span class="at">by=</span><span class="fu">seq</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>)) <span class="co">#Make a dataframe with the required information for samEst</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Let’s see if we can explicitly recover this trend now using a Ricker model with time-varying (random walk) in capacity:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m_rwb_tmb<span class="ot">&lt;-</span> samEst<span class="sc">::</span><span class="fu">ricker_rw_TMB</span>(<span class="at">data=</span>df,<span class="at">tv.par=</span><span class="st">'b'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>iter: 1  value: 5.228095 mgc: 0.7130033 ustep: 1 
+iter: 2  value: 5.086491 mgc: 0.2347438 ustep: 1 
+iter: 3  value: 5.076241 mgc: 0.04664437 ustep: 1 
+iter: 4  value: 5.07614 mgc: 0.004828716 ustep: 1 
+iter: 5  value: 5.07614 mgc: 5.258163e-05 ustep: 1 
+iter: 6  mgc: 6.167575e-09 
+iter: 1  mgc: 6.167575e-09 
+Matching hessian patterns... Done
+outer mgc:  13.03849 
+iter: 1  value: 1.101564 mgc: 5.703615 ustep: 0.2494656 
+iter: 2  value: -1.976685 mgc: 9.42728 ustep: 0.4995153 
+iter: 3  value: -2.065788 mgc: 1.558771 ustep: 0.7067933 
+iter: 4  value: -2.066283 mgc: 0.08910235 ustep: 0.8407259 
+iter: 5  value: -2.066283 mgc: 0.001016134 ustep: 0.9169194 
+iter: 6  value: -2.066283 mgc: 1.070031e-05 ustep: 0.9575633 
+iter: 7  value: -2.066283 mgc: 1.314866e-07 ustep: 0.9785538 
+iter: 8  mgc: 8.296155e-10 
+iter: 1  value: -1.744951 mgc: 2.039678 ustep: 0.6827823 
+iter: 2  value: -1.888764 mgc: 1.191647 ustep: 0.8263238 
+iter: 3  value: -1.89265 mgc: 0.09667776 ustep: 0.9090326 
+iter: 4  value: -1.892672 mgc: 0.004572907 ustep: 0.9534367 
+iter: 5  value: -1.892672 mgc: 0.0001122267 ustep: 0.9764432 
+iter: 6  value: -1.892672 mgc: 1.556862e-06 ustep: 0.9881526 
+iter: 7  value: -1.892672 mgc: 1.101062e-08 ustep: 0.9940592 
+iter: 8  mgc: 4.143375e-11 
+iter: 1  mgc: 4.143375e-11 
+outer mgc:  11.81721 
+iter: 1  value: 10.46445 mgc: 2.210209 ustep: 0.4367355 
+iter: 2  value: -2.252635 mgc: 18.75663 ustep: 0.6608936 
+iter: 3  value: -4.534215 mgc: 5.542141 ustep: 0.8129723 
+iter: 4  value: -4.727036 mgc: 1.172348 ustep: 0.9016596 
+iter: 5  value: -4.730108 mgc: 0.1140708 ustep: 0.9495626 
+iter: 6  value: -4.73011 mgc: 0.002996384 ustep: 0.9744576 
+iter: 7  value: -4.73011 mgc: 1.211754e-05 ustep: 0.9871475 
+iter: 8  value: -4.73011 mgc: 2.124107e-08 ustep: 0.9935536 
+mgc: 1.884204e-11 
+iter: 1  mgc: 1.884204e-11 
+outer mgc:  10.85549 
+iter: 1  value: -8.230773 mgc: 5.125617 ustep: 1 
+iter: 2  value: -8.432003 mgc: 1.908195 ustep: 1 
+iter: 3  value: -8.432814 mgc: 0.1365429 ustep: 1 
+iter: 4  value: -8.432814 mgc: 0.0007727814 ustep: 1 
+iter: 5  value: -8.432814 mgc: 2.321113e-08 ustep: 1 
+mgc: 3.197442e-14 
+iter: 1  mgc: 3.197442e-14 
+outer mgc:  3.805644 
+iter: 1  value: 5.09517 mgc: 11.17459 ustep: 0.2494656 
+iter: 2  value: -13.83202 mgc: 23.3597 ustep: 0.4995153 
+iter: 3  value: -14.93276 mgc: 5.23345 ustep: 0.7067933 
+iter: 4  value: -14.94236 mgc: 0.532618 ustep: 0.8407259 
+iter: 5  value: -14.94237 mgc: 0.009002526 ustep: 0.9169194 
+iter: 6  value: -14.94237 mgc: 1.928762e-05 ustep: 0.9575633 
+iter: 7  value: -14.94237 mgc: 3.54436e-08 ustep: 0.9785538 
+mgc: 3.835332e-11 
+iter: 1  mgc: 3.835332e-11 
+outer mgc:  6.883551 
+iter: 1  value: -22.71897 mgc: 10.12248 ustep: 1 
+iter: 2  value: -22.72333 mgc: 0.6082568 ustep: 1 
+iter: 3  value: -22.72333 mgc: 0.002864366 ustep: 1 
+iter: 4  value: -22.72333 mgc: 1.109215e-07 ustep: 1 
+mgc: 6.439294e-14 
+iter: 1  mgc: 6.439294e-14 
+outer mgc:  1.921439 
+iter: 1  value: -18.27208 mgc: 6.160711 ustep: 1 
+iter: 2  value: -18.27447 mgc: 0.4445133 ustep: 1 
+iter: 3  value: -18.27447 mgc: 0.002326862 ustep: 1 
+iter: 4  value: -18.27447 mgc: 6.890173e-08 ustep: 1 
+mgc: 4.52971e-14 
+iter: 1  value: -21.9143 mgc: 2.238282 ustep: 1 
+iter: 2  value: -21.91431 mgc: 0.03618822 ustep: 1 
+iter: 3  value: -21.91431 mgc: 1.114165e-05 ustep: 1 
+iter: 4  mgc: 1.260547e-12 
+iter: 1  mgc: 1.260547e-12 
+outer mgc:  1.043584 
+iter: 1  value: -24.1818 mgc: 4.335474 ustep: 1 
+iter: 2  value: -24.20665 mgc: 0.4518473 ustep: 1 
+iter: 3  value: -24.20666 mgc: 0.004983515 ustep: 1 
+iter: 4  value: -24.20666 mgc: 6.505642e-07 ustep: 1 
+iter: 5  mgc: 6.084022e-14 
+iter: 1  mgc: 6.084022e-14 
+outer mgc:  1.075839 
+iter: 1  value: -24.77611 mgc: 3.653628 ustep: 1 
+iter: 2  value: -24.77618 mgc: 0.08542885 ustep: 1 
+iter: 3  value: -24.77618 mgc: 5.368307e-05 ustep: 1 
+iter: 4  mgc: 2.505532e-11 
+iter: 1  value: -24.33663 mgc: 1.101552 ustep: 1 
+iter: 2  value: -24.33664 mgc: 0.01019778 ustep: 1 
+iter: 3  value: -24.33664 mgc: 2.371645e-06 ustep: 1 
+iter: 4  mgc: 1.216804e-13 
+iter: 1  mgc: 1.216804e-13 
+outer mgc:  0.3457502 
+iter: 1  value: -24.20858 mgc: 0.229943 ustep: 1 
+iter: 2  value: -24.20858 mgc: 0.0002730025 ustep: 1 
+iter: 3  mgc: 1.894162e-09 
+iter: 1  mgc: 1.894162e-09 
+outer mgc:  0.02192846 
+iter: 1  value: -24.22867 mgc: 0.01139852 ustep: 1 
+iter: 2  value: -24.22867 mgc: 1.087174e-06 ustep: 1 
+iter: 3  mgc: 7.283063e-14 
+iter: 1  mgc: 7.283063e-14 
+outer mgc:  0.003774536 
+iter: 1  value: -24.23173 mgc: 0.01405435 ustep: 1 
+iter: 2  value: -24.23173 mgc: 3.428246e-06 ustep: 1 
+iter: 3  mgc: 2.251532e-13 
+iter: 1  mgc: 2.251532e-13 
+outer mgc:  0.001058884 
+iter: 1  value: -24.22908 mgc: 0.006053206 ustep: 1 
+iter: 2  value: -24.22908 mgc: 6.330183e-07 ustep: 1 
+iter: 3  mgc: 8.126833e-14 
+iter: 1  mgc: 8.126833e-14 
+outer mgc:  0.0001844245 
+iter: 1  value: -24.22945 mgc: 0.0005861432 ustep: 1 
+iter: 2  mgc: 4.951253e-09 
+iter: 1  mgc: 4.951253e-09 
+outer mgc:  1.864404e-05 
+iter: 1  value: -24.22944 mgc: 7.021171e-05 ustep: 1 
+iter: 2  mgc: 3.505807e-11 
+iter: 1  mgc: 3.505807e-11 
+outer mgc:  2.634232e-06 
+iter: 1  value: -24.22944 mgc: 1.793986e-05 ustep: 1 
+iter: 2  mgc: 2.67697e-12 
+iter: 1  mgc: 2.67697e-12 
+outer mgc:  1.413524e-06 
+iter: 1  value: -24.22944 mgc: 3.429472e-06 ustep: 1 
+iter: 2  mgc: 1.206812e-13 
+iter: 1  mgc: 1.206812e-13 
+outer mgc:  5.24147e-08 
+iter: 1  value: -24.22944 mgc: 1.322468e-07 ustep: 1 
+mgc: 8.348877e-14 
+iter: 1  mgc: 8.348877e-14 
+outer mgc:  2.589764e-09 
+iter: 1  value: -24.22944 mgc: 1.098353e-08 ustep: 1 
+mgc: 5.639933e-14 
+iter: 1  mgc: 5.639933e-14 
+outer mgc:  2.118038e-11 
+iter: 1  mgc: 8.463097e-11 
+iter: 1  mgc: 8.463097e-11 
+outer mgc:  2.067258e-11 
+iter: 1  mgc: 9.518519e-11 
+iter: 1  mgc: 8.463097e-11 
+iter: 1  mgc: 8.463097e-11 
+outer mgc:  2.067258e-11 
+iter: 1  value: -24.22975 mgc: 0.0279681 ustep: 1 
+iter: 2  value: -24.22975 mgc: 4.931174e-06 ustep: 1 
+iter: 3  mgc: 1.484368e-13 
+outer mgc:  0.01639332 
+iter: 1  value: -24.22911 mgc: 0.0279681 ustep: 1 
+iter: 2  value: -24.22911 mgc: 4.928095e-06 ustep: 1 
+iter: 3  mgc: 1.668665e-13 
+outer mgc:  0.01638895 
+iter: 1  value: -24.24056 mgc: 0.05367028 ustep: 1 
+iter: 2  value: -24.24056 mgc: 6.366937e-05 ustep: 1 
+iter: 3  mgc: 1.05187e-10 
+outer mgc:  0.04753936 
+iter: 1  value: -24.21827 mgc: 0.05367028 ustep: 1 
+iter: 2  value: -24.21827 mgc: 6.341457e-05 ustep: 1 
+iter: 3  mgc: 1.046585e-10 
+outer mgc:  0.04759735 
+iter: 1  value: -24.21377 mgc: 0.02079942 ustep: 1 
+iter: 2  value: -24.21377 mgc: 2.125016e-06 ustep: 1 
+iter: 3  mgc: 7.194245e-14 
+outer mgc:  0.01908074 
+iter: 1  value: -24.2451 mgc: 0.02084106 ustep: 1 
+iter: 2  value: -24.2451 mgc: 2.132381e-06 ustep: 1 
+iter: 3  mgc: 8.171241e-14 
+outer mgc:  0.01907014 
+iter: 1  value: -24.2151 mgc: 0.02079942 ustep: 1 
+iter: 2  value: -24.2151 mgc: 2.128121e-06 ustep: 1 
+iter: 3  mgc: 8.171241e-14 
+outer mgc:  0.02171986 
+iter: 1  value: -24.24377 mgc: 0.02084106 ustep: 1 
+iter: 2  value: -24.24377 mgc: 2.129271e-06 ustep: 1 
+iter: 3  mgc: 8.737455e-14 
+outer mgc:  0.02173141 
+outer mgc:  1471.081 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co">#The series for Smax</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>m_rwb_tmb<span class="sc">$</span>Smax</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] 2255.7449 1930.6262 1628.7887 1434.4741 1248.4816 1016.7299 1200.2030
+ [8]  976.9381  998.4733  994.6282  879.2909  874.6904  859.8473  792.0892
+[15]  855.6408  710.4845  732.4845  686.5216  623.6305  693.5391  767.6049
+[22]  783.4595  685.0238  576.2829  504.0141  514.1035  397.2826  281.8214
+[29]  272.2987  249.2522</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>samEst<span class="sc">::</span><span class="fu">sr_plot</span>(<span class="at">df=</span>df,<span class="at">mod=</span>m_rwb_tmb,<span class="at">type=</span><span class="st">'rw'</span>,<span class="at">par=</span><span class="st">'b'</span>,<span class="at">form=</span><span class="st">'tmb'</span>,<span class="at">title=</span><span class="st">'simulation'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="exercise2_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Let’s look at the residuals too.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>residuals<span class="ot">&lt;-</span>m_rwb_tmb<span class="sc">$</span>residuals</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(by, residuals))<span class="sc">+</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">colour =</span> residuals), <span class="at">stroke=</span><span class="dv">2</span>)<span class="sc">+</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_hline</span>(<span class="at">yintercept=</span><span class="dv">0</span>,<span class="at">linewidth=</span><span class="fl">1.3</span>)<span class="sc">+</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="fu">scale_colour_viridis_c</span>(<span class="at">name=</span><span class="st">'p'</span>)<span class="sc">+</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggtitle</span>(<span class="st">"Residuals"</span>)<span class="sc">+</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_classic</span>(<span class="dv">14</span>)<span class="sc">+</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="fu">theme</span>(<span class="at">panel.background =</span> <span class="fu">element_blank</span>(),<span class="at">strip.background =</span> <span class="fu">element_rect</span>(<span class="at">colour=</span><span class="cn">NA</span>, <span class="at">fill=</span><span class="cn">NA</span>),<span class="at">panel.border =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">color =</span> <span class="st">"black"</span>),</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">face=</span><span class="st">"bold"</span>, <span class="at">size=</span><span class="dv">12</span>),</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">axis.text=</span><span class="fu">element_text</span>(<span class="at">face=</span><span class="st">"bold"</span>),<span class="at">axis.title =</span> <span class="fu">element_text</span>(<span class="at">face=</span><span class="st">"bold"</span>),<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">hjust =</span> <span class="fl">0.5</span>,<span class="at">size=</span><span class="dv">15</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="exercise2_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>pred_sim<span class="ot">=</span><span class="fu">data.frame</span>(<span class="at">pred=</span>m_rwb_tmb<span class="sc">$</span>Smax,<span class="at">sim=</span>Smax[<span class="dv">5</span><span class="sc">:</span>L])</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(pred_sim, <span class="fu">aes</span>(pred, sim)) <span class="sc">+</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">colour =</span> <span class="fu">as.numeric</span>(<span class="fu">rownames</span>(pred_sim))),<span class="at">size=</span><span class="fl">2.5</span>) <span class="sc">+</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">scale_colour_viridis_c</span>(<span class="at">name=</span><span class="st">'Year'</span>)<span class="sc">+</span><span class="fu">geom_abline</span>(<span class="at">intercept=</span><span class="dv">0</span>,<span class="at">slope=</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="exercise2_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Of course, in reality we cannot know a priori which parameter is changing just by examining the spawner-recruitment plot (although we may have some system/ecological knowledge pointing towards either a change in productivity or capacity).</p>
+<p>We can compare model fits with either formulation to the above scenario where capacity is changing. You can pull out two information criteria that balance the model likelihood with parsimony (by penalizing more complex models) - AIC (Akaike Informtaion Criterion, adjusted for small sample sizes) or BIC (Bayesian Information Criterion), the latter tends to be more conservative in terms of penalizing complexity.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">#We will fit the random walk alpha model to the dataset generated with a capacity change</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>m_rwa_tmb<span class="ot">&lt;-</span> samEst<span class="sc">::</span><span class="fu">ricker_rw_TMB</span>(<span class="at">data=</span>df,<span class="at">tv.par=</span><span class="st">'a'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>iter: 1  value: 24.21889 mgc: 4.442723 ustep: 1 
+iter: 2  mgc: 1.887379e-15 
+iter: 1  mgc: 1.887379e-15 
+Matching hessian patterns... Done
+outer mgc:  10.19681 
+iter: 1  value: -3.682148 mgc: 3.822169 ustep: 1 
+iter: 2  mgc: 3.552714e-15 
+iter: 1  mgc: 3.552714e-15 
+outer mgc:  8.043072 
+iter: 1  value: -6.607776 mgc: 15.10714 ustep: 1 
+iter: 2  mgc: 4.884981e-15 
+iter: 1  mgc: 4.884981e-15 
+outer mgc:  10.17145 
+iter: 1  value: -11.9488 mgc: 4.42886 ustep: 1 
+iter: 2  mgc: 7.771561e-15 
+iter: 1  mgc: 7.771561e-15 
+outer mgc:  4.244504 
+iter: 1  value: -11.5636 mgc: 4.291754 ustep: 1 
+iter: 2  mgc: 9.214851e-15 
+iter: 1  mgc: 9.214851e-15 
+outer mgc:  5.256903 
+iter: 1  value: -16.21752 mgc: 17.2427 ustep: 1 
+iter: 2  mgc: 1.421085e-14 
+iter: 1  value: -7.849808 mgc: 23.31907 ustep: 1 
+iter: 2  mgc: 1.89293e-14 
+iter: 1  mgc: 1.421085e-14 
+outer mgc:  5.367635 
+iter: 1  value: -13.45787 mgc: 33.31284 ustep: 1 
+iter: 2  mgc: 3.375078e-14 
+iter: 1  value: -16.31985 mgc: 15.51843 ustep: 1 
+iter: 2  mgc: 1.376677e-14 
+iter: 1  value: -17.02903 mgc: 6.712304 ustep: 1 
+iter: 2  mgc: 1.287859e-14 
+iter: 1  mgc: 1.287859e-14 
+outer mgc:  4.140797 
+iter: 1  value: -17.95011 mgc: 5.746002 ustep: 1 
+iter: 2  mgc: 1.310063e-14 
+iter: 1  mgc: 1.310063e-14 
+outer mgc:  4.750729 
+iter: 1  value: -17.96881 mgc: 7.412379 ustep: 1 
+iter: 2  mgc: 1.376677e-14 
+iter: 1  mgc: 1.376677e-14 
+outer mgc:  3.392118 
+iter: 1  value: -18.48233 mgc: 8.372011 ustep: 1 
+iter: 2  mgc: 2.131628e-14 
+iter: 1  mgc: 2.131628e-14 
+outer mgc:  4.298217 
+iter: 1  value: -18.1358 mgc: 6.670919 ustep: 1 
+iter: 2  mgc: 1.509903e-14 
+iter: 1  mgc: 1.509903e-14 
+outer mgc:  1.61343 
+iter: 1  value: -19.42739 mgc: 9.661722 ustep: 1 
+iter: 2  mgc: 1.110223e-14 
+iter: 1  mgc: 1.110223e-14 
+outer mgc:  3.918968 
+iter: 1  value: -18.70231 mgc: 7.37163 ustep: 1 
+iter: 2  mgc: 1.065814e-14 
+iter: 1  mgc: 1.065814e-14 
+outer mgc:  1.936412 
+iter: 1  value: -21.52577 mgc: 4.120856 ustep: 1 
+iter: 2  mgc: 1.865175e-14 
+iter: 1  value: -19.47742 mgc: 2.772069 ustep: 1 
+iter: 2  mgc: 2.087219e-14 
+iter: 1  value: -19.05696 mgc: 1.607355 ustep: 1 
+iter: 2  mgc: 1.909584e-14 
+iter: 1  mgc: 1.909584e-14 
+outer mgc:  1.014825 
+iter: 1  value: -19.44451 mgc: 1.564667 ustep: 1 
+iter: 2  mgc: 1.765255e-14 
+iter: 1  mgc: 1.765255e-14 
+outer mgc:  0.5814919 
+iter: 1  value: -19.50722 mgc: 1.246811 ustep: 1 
+iter: 2  mgc: 9.992007e-15 
+iter: 1  value: -19.55063 mgc: 2.3728 ustep: 1 
+iter: 2  mgc: 1.731948e-14 
+iter: 1  mgc: 1.731948e-14 
+outer mgc:  0.1713119 
+iter: 1  value: -19.69185 mgc: 0.9757876 ustep: 1 
+iter: 2  mgc: 1.24345e-14 
+iter: 1  value: -19.59662 mgc: 0.3065837 ustep: 1 
+iter: 2  mgc: 1.887379e-14 
+iter: 1  mgc: 1.887379e-14 
+outer mgc:  0.0807788 
+iter: 1  value: -19.53374 mgc: 0.5107098 ustep: 1 
+iter: 2  mgc: 1.04361e-14 
+iter: 1  mgc: 1.04361e-14 
+outer mgc:  0.02242415 
+iter: 1  value: -19.54238 mgc: 0.03843078 ustep: 1 
+iter: 2  mgc: 1.909584e-14 
+iter: 1  mgc: 1.909584e-14 
+outer mgc:  0.007778702 
+iter: 1  value: -19.53988 mgc: 0.005832192 ustep: 1 
+iter: 2  mgc: 1.24345e-14 
+iter: 1  mgc: 1.24345e-14 
+outer mgc:  0.0001361324 
+iter: 1  value: -19.53988 mgc: 0.0003314211 ustep: 1 
+iter: 2  mgc: 1.176836e-14 
+iter: 1  mgc: 1.176836e-14 
+outer mgc:  1.124699e-05 
+iter: 1  mgc: 1.176836e-14 
+iter: 1  mgc: 1.176836e-14 
+outer mgc:  1.124699e-05 
+iter: 1  value: -19.53987 mgc: 0.02328168 ustep: 1 
+iter: 2  mgc: 1.021405e-14 
+outer mgc:  0.03000197 
+iter: 1  value: -19.53987 mgc: 0.02328168 ustep: 1 
+iter: 2  mgc: 2.309264e-14 
+outer mgc:  0.02997948 
+iter: 1  value: -19.53983 mgc: 0.06540726 ustep: 1 
+iter: 2  mgc: 1.576517e-14 
+outer mgc:  0.09615082 
+iter: 1  value: -19.53983 mgc: 0.06534188 ustep: 1 
+iter: 2  mgc: 1.421085e-14 
+outer mgc:  0.09588445 
+iter: 1  value: -19.52606 mgc: 0.01734374 ustep: 1 
+iter: 2  mgc: 1.865175e-14 
+outer mgc:  0.02501492 
+iter: 1  value: -19.55367 mgc: 0.01737847 ustep: 1 
+iter: 2  mgc: 1.199041e-14 
+outer mgc:  0.02500458 
+iter: 1  value: -19.52368 mgc: 0.01734374 ustep: 1 
+iter: 2  mgc: 1.24345e-14 
+outer mgc:  0.02023813 
+iter: 1  value: -19.55606 mgc: 0.01737847 ustep: 1 
+iter: 2  mgc: 1.953993e-14 
+outer mgc:  0.02024402 
+outer mgc:  814.1503 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>m_rwa_tmb<span class="sc">$</span>AICc</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -14.91623</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>m_rwb_tmb<span class="sc">$</span>AICc</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -19.42301</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co">#The lower AICc == higher model likelihood</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>m_rwa_tmb<span class="sc">$</span>BIC</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -10.91144</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>m_rwb_tmb<span class="sc">$</span>BIC</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -15.41822</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co">#The lower BIC == higher model likelihood</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We can even estimate with both parameters - but it can have convergence issues so beware…</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>m_rwab_tmb<span class="ot">&lt;-</span> samEst<span class="sc">::</span><span class="fu">ricker_rw_TMB</span>(<span class="at">data=</span>df,<span class="at">tv.par=</span><span class="st">'both'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>iter: 1  value: -17.43167 mgc: 8.157501 ustep: 0.6827823 
+iter: 2  value: -17.59347 mgc: 0.3317973 ustep: 0.8263238 
+iter: 3  value: -17.61498 mgc: 0.0172077 ustep: 0.9090326 
+iter: 4  value: -17.62809 mgc: 0.01075121 ustep: 0.9534367 
+iter: 5  value: -17.6323 mgc: 0.005808357 ustep: 0.9764432 
+iter: 6  value: -17.63286 mgc: 0.002515315 ustep: 0.9881526 
+iter: 7  value: -17.63289 mgc: 0.0005002507 ustep: 0.9940592 
+iter: 8  value: -17.63289 mgc: 4.988113e-05 ustep: 0.9970255 
+iter: 9  value: -17.63289 mgc: 2.958043e-06 ustep: 0.9985118 
+iter: 10  value: -17.63289 mgc: 9.3377e-08 ustep: 0.9992557 
+iter: 11  mgc: 1.500112e-09 
+iter: 1  mgc: 1.500112e-09 
+Matching hessian patterns... Done
+outer mgc:  16.27295 
+iter: 1  value: -34.90941 mgc: 19.28648 ustep: 0.6827823 
+iter: 2  value: -38.93845 mgc: 6.343588 ustep: 0.8263238 
+iter: 3  value: -40.20206 mgc: 1.344038 ustep: 0.9090326 
+iter: 4  value: -40.88782 mgc: 1.596251 ustep: 0.9534367 
+iter: 5  value: -41.03333 mgc: 0.2646403 ustep: 0.9764432 
+iter: 6  value: -41.13743 mgc: 1.316678 ustep: 0.9881526 
+iter: 7  value: -41.13954 mgc: 0.01754125 ustep: 0.9940592 
+iter: 8  value: -41.13956 mgc: 0.01615485 ustep: 0.9970255 
+iter: 9  value: -41.13956 mgc: 2.23615e-06 ustep: 0.9985118 
+iter: 10  value: -41.13956 mgc: 1.389154e-08 ustep: 0.9992557 
+iter: 11  mgc: 4.119904e-11 
+iter: 1  mgc: 4.119904e-11 
+outer mgc:  7.630444 
+iter: 1  value: -38.42708 mgc: 19.51942 ustep: 1 
+iter: 2  value: -38.94227 mgc: 1.431959 ustep: 1 
+iter: 3  value: -39.01308 mgc: 0.1788051 ustep: 1 
+iter: 4  value: -39.02194 mgc: 0.2138441 ustep: 1 
+iter: 5  value: -39.02209 mgc: 0.01226725 ustep: 1 
+iter: 6  value: -39.02209 mgc: 0.0005689425 ustep: 1 
+iter: 7  value: -39.02209 mgc: 1.890656e-07 ustep: 1 
+iter: 8  mgc: 1.119105e-13 
+iter: 1  mgc: 1.119105e-13 
+outer mgc:  5.705787 
+iter: 1  value: -34.2655 mgc: 57.17622 ustep: 0.8994163 
+iter: 2  value: -48.20828 mgc: 30.22129 ustep: 0.9483808 
+iter: 3  value: -49.04397 mgc: 3.342582 ustep: 0.973851 
+iter: 4  value: -49.12797 mgc: 1.633757 ustep: 0.9868402 
+iter: 5  value: -49.1298 mgc: 0.1065661 ustep: 0.993399 
+iter: 6  value: -49.1298 mgc: 0.004634167 ustep: 0.9966944 
+iter: 7  value: -49.1298 mgc: 8.843555e-06 ustep: 0.998346 
+iter: 8  value: -49.1298 mgc: 1.571384e-08 ustep: 0.9991727 
+iter: 9  mgc: 4.148409e-11 
+iter: 1  mgc: 4.148409e-11 
+outer mgc:  4.152396 
+iter: 1  value: -77.42006 mgc: 27.74325 ustep: 1 
+iter: 2  value: -77.83804 mgc: 5.343746 ustep: 1 
+iter: 3  value: -77.83924 mgc: 0.1387752 ustep: 1 
+iter: 4  value: -77.83924 mgc: 0.002840268 ustep: 1 
+iter: 5  value: -77.83924 mgc: 1.991226e-07 ustep: 1 
+iter: 6  mgc: 1.483258e-13 
+iter: 1  value: -61.17575 mgc: 5.398389 ustep: 1 
+iter: 2  value: -61.1771 mgc: 0.1522026 ustep: 1 
+iter: 3  value: -61.1771 mgc: 0.0006068429 ustep: 1 
+iter: 4  value: -61.1771 mgc: 2.49719e-07 ustep: 1 
+iter: 5  mgc: 1.327827e-13 
+iter: 1  mgc: 1.327827e-13 
+outer mgc:  2.329655 
+iter: 1  value: -63.68798 mgc: 21.34502 ustep: 1 
+iter: 2  value: -63.73221 mgc: 1.253755 ustep: 1 
+iter: 3  value: -63.73223 mgc: 0.01814439 ustep: 1 
+iter: 4  value: -63.73223 mgc: 3.541359e-05 ustep: 1 
+iter: 5  mgc: 3.808864e-11 
+iter: 1  mgc: 3.808864e-11 
+outer mgc:  2.649778 
+iter: 1  value: -65.94367 mgc: 11.35986 ustep: 1 
+iter: 2  value: -65.95359 mgc: 0.3410236 ustep: 1 
+iter: 3  value: -65.9536 mgc: 0.001530421 ustep: 1 
+iter: 4  value: -65.9536 mgc: 2.160171e-05 ustep: 1 
+iter: 5  mgc: 1.569689e-12 
+iter: 1  mgc: 1.569689e-12 
+outer mgc:  1.671131 
+iter: 1  value: -77.50268 mgc: 3.998948 ustep: 1 
+iter: 2  value: -77.50325 mgc: 0.09992414 ustep: 1 
+iter: 3  value: -77.50325 mgc: 0.000768969 ustep: 1 
+iter: 4  value: -77.50325 mgc: 2.02436e-07 ustep: 1 
+iter: 5  mgc: 2.513545e-13 
+iter: 1  value: -69.61075 mgc: 0.8965786 ustep: 1 
+iter: 2  value: -69.61076 mgc: 0.006067885 ustep: 1 
+iter: 3  value: -69.61076 mgc: 4.841031e-06 ustep: 1 
+iter: 4  mgc: 8.971379e-12 
+iter: 1  mgc: 8.971379e-12 
+outer mgc:  0.7711402 
+iter: 1  value: -70.7056 mgc: 4.40192 ustep: 1 
+iter: 2  value: -70.70587 mgc: 0.07794786 ustep: 1 
+iter: 3  value: -70.70587 mgc: 0.0002476009 ustep: 1 
+iter: 4  value: -70.70587 mgc: 5.472976e-08 ustep: 1 
+iter: 5  mgc: 2.193801e-13 
+iter: 1  mgc: 2.193801e-13 
+outer mgc:  0.9802255 
+iter: 1  value: -72.82414 mgc: 13.70539 ustep: 1 
+iter: 2  value: -72.82437 mgc: 0.1852749 ustep: 1 
+iter: 3  value: -72.82437 mgc: 0.0001194973 ustep: 1 
+iter: 4  mgc: 6.673764e-10 
+iter: 1  mgc: 6.673764e-10 
+outer mgc:  1.567358 
+iter: 1  value: -74.53443 mgc: 5.309222 ustep: 1 
+iter: 2  value: -74.53445 mgc: 0.02055719 ustep: 1 
+iter: 3  value: -74.53445 mgc: 2.778079e-06 ustep: 1 
+iter: 4  mgc: 7.684825e-12 
+iter: 1  mgc: 7.684825e-12 
+outer mgc:  0.6681908 
+iter: 1  value: -77.5159 mgc: 5.819888 ustep: 1 
+iter: 2  value: -77.51591 mgc: 0.01449811 ustep: 1 
+iter: 3  value: -77.51591 mgc: 6.999612e-06 ustep: 1 
+iter: 4  mgc: 2.852507e-11 
+iter: 1  mgc: 2.852507e-11 
+outer mgc:  0.37819 
+iter: 1  value: -78.81218 mgc: 8.201421 ustep: 1 
+iter: 2  value: -78.81219 mgc: 0.02130371 ustep: 1 
+iter: 3  value: -78.81219 mgc: 9.835269e-07 ustep: 1 
+iter: 4  mgc: 4.45638e-12 
+iter: 1  mgc: 4.45638e-12 
+outer mgc:  0.200966 
+iter: 1  value: -80.66912 mgc: 8.509865 ustep: 1 
+iter: 2  value: -80.66912 mgc: 0.02394919 ustep: 1 
+iter: 3  value: -80.66912 mgc: 1.713841e-06 ustep: 1 
+iter: 4  mgc: 7.398526e-13 
+iter: 1  mgc: 7.398526e-13 
+outer mgc:  0.217756 
+iter: 1  value: -81.32131 mgc: 0.2796511 ustep: 1 
+iter: 2  value: -81.32131 mgc: 0.0006786444 ustep: 1 
+iter: 3  mgc: 2.66995e-09 
+iter: 1  mgc: 2.66995e-09 
+outer mgc:  0.05926521 
+iter: 1  value: -81.33703 mgc: 0.1977391 ustep: 1 
+iter: 2  value: -81.33703 mgc: 0.0001833795 ustep: 1 
+iter: 3  mgc: 5.725926e-10 
+iter: 1  mgc: 5.725926e-10 
+outer mgc:  0.02547452 
+iter: 1  value: -81.3566 mgc: 0.5595558 ustep: 1 
+iter: 2  value: -81.3566 mgc: 0.0001376104 ustep: 1 
+iter: 3  mgc: 1.003571e-10 
+iter: 1  mgc: 1.003571e-10 
+outer mgc:  0.01280525 
+iter: 1  value: -81.36431 mgc: 0.1435791 ustep: 1 
+iter: 2  value: -81.36431 mgc: 9.515366e-06 ustep: 1 
+iter: 3  mgc: 5.82645e-13 
+iter: 1  mgc: 5.82645e-13 
+outer mgc:  0.000495973 
+iter: 1  value: -81.36535 mgc: 0.007185988 ustep: 1 
+iter: 2  value: -81.36535 mgc: 1.348258e-08 ustep: 1 
+mgc: 4.796163e-13 
+iter: 1  mgc: 4.796163e-13 
+outer mgc:  3.456058e-05 
+iter: 1  value: -81.36564 mgc: 0.001197301 ustep: 1 
+iter: 2  mgc: 3.848637e-10 
+iter: 1  mgc: 3.848637e-10 
+outer mgc:  4.591235e-06 
+iter: 1  mgc: 3.848637e-10 
+iter: 1  mgc: 3.848637e-10 
+outer mgc:  4.591235e-06 
+iter: 1  value: -81.36694 mgc: 0.3279244 ustep: 1 
+iter: 2  value: -81.36694 mgc: 4.451465e-05 ustep: 1 
+iter: 3  mgc: 1.050715e-11 
+outer mgc:  0.06022329 
+iter: 1  value: -81.36429 mgc: 0.3279244 ustep: 1 
+iter: 2  value: -81.36429 mgc: 4.444658e-05 ustep: 1 
+iter: 3  mgc: 1.064393e-11 
+outer mgc:  0.06012558 
+iter: 1  value: -81.36578 mgc: 0.02743388 ustep: 1 
+iter: 2  value: -81.36578 mgc: 8.836322e-07 ustep: 1 
+iter: 3  mgc: 4.138911e-13 
+outer mgc:  0.02242924 
+iter: 1  value: -81.36549 mgc: 0.02743388 ustep: 1 
+iter: 2  value: -81.36549 mgc: 8.835905e-07 ustep: 1 
+iter: 3  mgc: 3.692602e-13 
+outer mgc:  0.02243609 
+iter: 1  value: -81.35133 mgc: 0.03112184 ustep: 1 
+iter: 2  value: -81.35133 mgc: 1.698059e-06 ustep: 1 
+iter: 3  mgc: 3.93463e-13 
+outer mgc:  0.02371387 
+iter: 1  value: -81.37995 mgc: 0.03118414 ustep: 1 
+iter: 2  value: -81.37995 mgc: 1.706646e-06 ustep: 1 
+iter: 3  mgc: 4.352074e-13 
+outer mgc:  0.02370511 
+iter: 1  value: -81.34742 mgc: 0.01648374 ustep: 1 
+iter: 2  value: -81.34742 mgc: 8.059609e-07 ustep: 1 
+iter: 3  mgc: 3.617107e-13 
+outer mgc:  0.01678411 
+iter: 1  value: -81.38386 mgc: 0.01651674 ustep: 1 
+iter: 2  value: -81.38386 mgc: 8.063351e-07 ustep: 1 
+iter: 3  mgc: 4.609646e-13 
+outer mgc:  0.01678528 
+iter: 1  value: -81.33817 mgc: 0.03112184 ustep: 1 
+iter: 2  value: -81.33817 mgc: 4.011454e-06 ustep: 1 
+iter: 3  mgc: 4.174439e-13 
+outer mgc:  0.00572736 
+iter: 1  value: -81.39312 mgc: 0.03118414 ustep: 1 
+iter: 2  value: -81.39312 mgc: 4.005256e-06 ustep: 1 
+iter: 3  mgc: 4.982681e-13 
+outer mgc:  0.005720414 
+outer mgc:  905.788 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>m_rwab_tmb<span class="sc">$</span>alpha</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] 2.6376463 2.5486918 2.4355756 2.2951353 2.1783390 1.9650820 2.0526058
+ [8] 1.8589495 1.8474663 1.8492757 1.7460086 1.7273676 1.7073154 1.6385655
+[15] 1.7121256 1.5316666 1.5396689 1.5054000 1.4087668 1.5361619 1.6229823
+[22] 1.6339876 1.5116184 1.2938788 1.1040566 1.0008698 0.7677701 0.5889606
+[29] 0.5781976 0.5353749</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>m_rwab_tmb<span class="sc">$</span>Smax</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] 1084.6151 1062.8110 1037.4645 1007.7033  982.3836  938.2441  939.5898
+ [8]  907.2347  897.1576  888.0817  872.7620  868.6582  864.4913  856.3898
+[15]  860.0075  846.5890  844.7636  839.2479  830.4878  841.7037  851.2720
+[22]  856.3808  852.7017  845.0451  839.1907  838.7543  828.0282  821.0193
+[29]  820.7545  819.2612</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>m_rwa_tmb<span class="sc">$</span>AICc</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -14.91623</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>m_rwb_tmb<span class="sc">$</span>AICc</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -19.42301</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>m_rwab_tmb<span class="sc">$</span>AICc</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -12.73938</code></pre>
+</div>
+</div>
+<p>You can also extract all of the reference points estimated for any of these models, In some cases they will be static and in others time-varying.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>m_rwa_tmb<span class="sc">$</span>Smsy</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] 814.1388 801.8433 783.5505 754.9858 728.7884 673.4111 688.8402 637.4665
+ [9] 633.4460 631.7548 598.2567 596.7085 590.0262 569.5782 593.2559 539.5121
+[17] 540.0595 532.2010 497.2240 545.0565 571.7732 576.4705 544.1431 473.8144
+[25] 407.9503 371.1923 283.3692 217.0257 219.4346 203.2472</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>m_rwb_tmb<span class="sc">$</span>Smsy</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] 1470.9239 1258.9208 1062.0989  935.3904  814.1086  662.9882  782.6272
+ [8]  637.0408  651.0835  648.5762  573.3671  570.3672  560.6884  516.5047
+[15]  557.9454  463.2920  477.6377  447.6663  406.6563  452.2423  500.5390
+[22]  510.8775  446.6896  375.7819  328.6570  335.2361  259.0596  183.7698
+[29]  177.5602  162.5321</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>m_rwa_tmb<span class="sc">$</span>umsy</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] 0.8692953 0.8561668 0.8366347 0.8061349 0.7781626 0.7190336 0.7355080
+ [8] 0.6806538 0.6763609 0.6745552 0.6387876 0.6371345 0.6299995 0.6081662
+[15] 0.6334480 0.5760631 0.5766476 0.5682567 0.5309101 0.5819832 0.6105099
+[22] 0.6155254 0.5810079 0.5059145 0.4355883 0.3963400 0.3025669 0.2317288
+[29] 0.2343009 0.2170169</code></pre>
+</div>
+</div>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
