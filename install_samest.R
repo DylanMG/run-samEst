@@ -4,12 +4,12 @@
 #----------------------------------------------------------------
 
 #dependencies
-install.packages('gsl')
-install.packages('here')
+#install.packages('gsl')
+#install.packages('here')
 
 
 #install TMB
-install.packages("TMB")
+#install.packages("TMB")
 library(TMB)
 
 #test TMB
