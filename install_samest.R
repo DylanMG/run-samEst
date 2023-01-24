@@ -19,8 +19,8 @@ dyn.load(dynlib(here::here("code/TMB/Ricker_simple")))
 #run the TMB code
 s<-read.csv("data/example.csv")
 srm <- lm(s$logRS~ s$S)
-SRdata<-list(obs_logRS=s$logR_S,obs_S=s$S)
-parameters<- list(
+SRdata<-list(obs_logRS=s$logRS,obs_S=s$S)
+parameters_simple<- list(
     alpha=srm$coefficients[1],
     logbeta = log(-srm$coefficients[2]),
     logsigobs=log(.4)
