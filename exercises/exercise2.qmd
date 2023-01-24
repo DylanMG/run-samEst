@@ -27,17 +27,19 @@ Starting with changes in productivity (alpha):
 #Simulation parameters:
 N=30 #length of time-series
 L=N+4 #length of time-series +4 for starting cohorts
+
+#Key parameters: alpha, beta, and sigma
+alpha <- seq(2.3,0.6, length.out=L) # productivity decline over 30 years
+beta <- 1/(1000) # capacity rate -often easier to conceptualize as Smax (1/beta) as its far more interpretable
+sigma <- 0.3 # ranges from ~0.2 to 1.5 for most Pacific salmon stocks
+Seq <- alpha/beta # equilibrium spawners - just used for the simulation start points
+
+#the rest of the simulation parameters
 RS=numeric(L) #productivity in each year
 S=numeric(L);S[1:4]=runif(4,Seq*0.8,Seq*1.2) #spawners in each year, we start with an initial escapement of 600 individuals
 R=numeric(L) #recruits in each year
 U=runif(L,0.4,0.6) #Harvest rate of cohorts with low variance 
 #(note U should be within the range of 0 to 1)
-
-#Key parameters: alpha, beta, and sigma
-alpha<- seq(2.3,0.6,length.out=L) # productivity decline over 30 years
-beta<- 1/(1000) # capacity rate -often easier to conceptualize as Smax (1/beta) as its far more interpretable
-sigma<- 0.3 # ranges from ~0.2 to 1.5 for most Pacific salmon stocks
-Seq<-alpha/beta # equilibrium spawners - just used for the simulation start points
 
 
 for(t in 5:L){
@@ -54,10 +56,12 @@ df=data.frame(S=S,R=R,logRS=RS,by=seq(1:30)) #Make a dataframe with the required
 
 #We'll fit a stationary curve
 m=lm(RS~S)
-df_pred=data.frame(
-S_pred=seq(min(S),max(S),length.out=200),
-R_pred=exp(m$coefficient[1]+m$coefficient[2]*S_pred)*S_pred
-)
+
+S_pred <-seq(min(S),max(S),length.out=200)
+R_pred <- exp(m$coefficient[1]+m$coefficient[2]*S_pred)*S_pred 
+
+df_pred <- data.frame(S_pred = S_pred,
+                      R_pred = R_pred)
 
  ggplot2::ggplot(df, aes(S, R)) +
  geom_line(data=df_pred,aes(x=S_pred,y=R_pred),linewidth=1.3)+
